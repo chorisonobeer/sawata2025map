@@ -1,6 +1,6 @@
 {
-  "title": "Geolonia PWAマップ",
-  "description": "Google スプレッドシートを更新するだけでオリジナルの地図アプリを作成できる\\n「Geolonia PWAマップ」",
+  "title": "佐和田料飲店マップ2025",
+  "description": "新潟県佐渡市佐和田町料飲店組合加盟店のMAPです",
   "data_url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvUHoy7wWdYt4WjEy3fNyD2P89GtkTzuw45ILKKsDMnxQK_MpScN_8X98LFGC7Eoeguyk0ybGVUblZ/pub?gid=1957425126&single=true&output=csv",
   "form_url": null,
   "logo_image_url": "https://geoloniamaps.github.io/pwamap/icon-pwamap.svg",

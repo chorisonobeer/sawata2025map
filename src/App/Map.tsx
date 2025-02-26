@@ -175,6 +175,7 @@ const Content = (props: Props) => {
     const map = new geolonia.Map({
       container: mapNode.current,
       style: 'geolonia/gsi',
+      attributionControl: false, // アトリビューション表示を無効化
     });
 
     const onMapLoad = () => {
