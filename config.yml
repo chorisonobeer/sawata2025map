@@ -2,7 +2,7 @@ title: 佐和田料飲店マップ2025
 description: 新潟県佐渡市佐和田町料飲店組合加盟店のMAPです
 data_url: https://docs.google.com/spreadsheets/d/e/2PACX-1vRvUHoy7wWdYt4WjEy3fNyD2P89GtkTzuw45ILKKsDMnxQK_MpScN_8X98LFGC7Eoeguyk0ybGVUblZ/pub?gid=1957425126&single=true&output=csv
 form_url:
-logo_image_url: https://geoloniamaps.github.io/pwamap/icon-pwamap.svg
-background_image_url: https://geoloniamaps.github.io/pwamap/geolonia_bgimage_1920_1080.png
-primary_color: "#d2691e"
+logo_image_url: /logo.svg
+background_image_url: /back.jpg
+primary_color: "#00A0E6"
 orderby: distance
