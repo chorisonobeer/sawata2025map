@@ -1,5 +1,4 @@
-.shop-single
-{
+.shop-single {
   position: absolute;
   top: 0;
   bottom: 0;
@@ -11,8 +10,7 @@
   height: 100%;
   z-index: 10;
 
-  .container
-  {
+  .container {
     height: 100%;
     box-sizing: border-box;
     padding: 16px 16px 120px;
@@ -22,27 +20,23 @@
     /* Firefox 対応 */
     scrollbar-width: none;
 
-    &::-webkit-scrollbar
-    {
+    &::-webkit-scrollbar {
       display: none;
     }
   }
 
-  h2
-  {
+  h2 {
     font-size: 1.4rem;
     word-break: break-all;
   }
 
-  sup
-  {
+  sup {
     font-size: 0.6rem;
     font-weight: normal;
     padding: 3px;
     border-radius: 6px;
     white-space: nowrap;
-    &.category
-    {
+    &.category {
       background-color: #f5b041;
       color: #ffffff;
     }
@@ -51,16 +45,14 @@
     }
   }
 
-  .head
-  {
+  .head {
     padding: 0 16px;
     background-color: var(--primary-color);;
     box-sizing: border-box;
     height: 44px;
     text-align: right;
 
-    button
-    {
+    button {
       position: relative;
       background-color: transparent;
       margin: 0;
@@ -71,8 +63,7 @@
       padding-left: 18px;
       font-size: 1rem;
 
-      svg
-      {
+      svg {
         position: absolute;
         top: 50%;
         left: 0;
@@ -83,30 +74,88 @@
     }
   }
 
-  .category, .distance
-  {
+  .category, .distance {
     border-radius: 4px;
     color: #ffffff;
     padding: 4px;
     font-size: 0.8rem;
+    display: inline-block;
   }
 
-  .category
-  {
+  .category {
     background-color: #f5b041;
-    &:hover
-    {
+    width: fit-content;
+    &:hover {
       opacity: 0.8;
     }
   }
 
-  .distance
-  {
+  .distance {
     background-color: #41b0f5;
-    &:hover
-    {
+    &:hover {
       opacity: 0.8;
     }
   }
 
+  .shop-info-box {
+    background-color: #f5f5f5;
+    border-radius: 5px;
+    padding: 12px 15px;
+    margin: 15px 0;
+    
+    .info-item {
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      
+      &:last-child {
+        margin-bottom: 0;
+      }
+      
+      .info-label {
+        font-weight: bold;
+        margin-right: 5px;
+      }
+    }
+  }
+  
+  .shop-images {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    
+    .shop-image {
+      width: 100%;
+    }
+  }
+  
+  .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 30px;
+    
+    .action-button {
+      display: block;
+      padding: 15px;
+      border-radius: 5px;
+      text-align: center;
+      font-weight: bold;
+      text-decoration: none;
+      
+      &.phone-button {
+        background-color: #FFA500;
+        color: white;
+      }
+      
+      &.web-button {
+        background-color: #009688;
+        color: white;
+      }
+    }
+  }
+  
+  .nowrap {
+    white-space: nowrap;
+    margin-right: 10px;
+  }
 }

@@ -13,7 +13,11 @@ declare namespace Pwamap {
     'Instagram': string;
     'Twitter': string;
     'Facebook': string;
-    '公式サイト': string
+    '公式サイト': string;
+    '営業時間': string;
+    '住所': string;
+    '定休日': string;
+    '創業年月': string;
   }
 
   type LngLat = [number, number]

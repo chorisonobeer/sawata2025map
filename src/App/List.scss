@@ -28,4 +28,67 @@
     font-size: 18px;
     display: flex;
   }
+  // スケルトンローディングのスタイル
+.skeleton {
+  animation: skeleton-loading 1s linear infinite alternate;
+  
+  .skeleton-content {
+    width: 70%;
+    
+    .skeleton-title {
+      height: 20px;
+      margin-bottom: 10px;
+      background-color: #e0e0e0;
+      border-radius: 4px;
+    }
+    
+    .skeleton-text {
+      height: 14px;
+      margin-bottom: 8px;
+      background-color: #e0e0e0;
+      width: 80%;
+      border-radius: 4px;
+    }
+  }
+  
+  .skeleton-image {
+    width: 70px;
+    height: 70px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+  }
+}
+
+@keyframes skeleton-loading {
+  0% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.9;
+  }
+}
+
+// ローダーの新しいスタイル
+.list-loader {
+  width: 30px;
+  height: 30px;
+  margin: 20px auto;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #3498db;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// リスト終了メッセージ
+.list-end-message {
+  text-align: center;
+  color: #777;
+  font-size: 14px;
+  padding: 15px 0;
+}
 }

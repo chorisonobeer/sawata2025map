@@ -1,0 +1,2269 @@
+<documents>
+<document index="1">
+<source>package.json</source>
+<document_content>
+{
+  "name": "geolonia-pwa",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@emotion/react": "^11.8.2",
+    "@emotion/styled": "^11.8.1",
+    "@mapbox/geojson-extent": "^1.0.1",
+    "@material-ui/core": "^5.0.0-beta.5",
+    "@testing-library/jest-dom": "^5.16.2",
+    "@testing-library/react": "^12.1.4",
+    "@testing-library/user-event": "^13.5.0",
+    "@turf/turf": "^6.5.0",
+    "@types/jest": "^27.4.1",
+    "@types/node": "^17.0.22",
+    "@types/react": "^17.0.41",
+    "@types/react-dom": "^17.0.14",
+    "chalk": "^5.0.1",
+    "csv-parse": "^4.8.8",
+    "icon-gen": "^3.0.0",
+    "next-qrcode": "^2.5.1",
+    "papaparse": "^5.4.1",
+    "pwa-asset-generator": "^6.0.6",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "react-icons": "^4.3.1",
+    "react-infinite-scroll-component": "^6.1.0",
+    "react-router-dom": "^6.2.2",
+    "react-scripts": "^5.0.1",
+    "react-select": "^5.2.2",
+    "react-share": "^4.4.0",
+    "react-stars": "^2.2.5",
+    "typescript": "~4.6.2"
+  },
+  "scripts": {
+    "start": "node bin/config.js && react-scripts start",
+    "build": "node bin/config.js && react-scripts build",
+    "build:assets": "pwa-asset-generator public/logo.svg ./public/ --index ./public/index.html --manifest ./public/manifest.json --favicon true",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "homepage": ".",
+  "eslintConfig": {
+    "extends": "react-app"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@types/lodash": "^4.17.15",
+    "@types/papaparse": "^5.3.14",
+    "@types/react-infinite-scroller": "^1.2.3",
+    "@types/react-router-dom": "^5.3.3",
+    "@types/react-stars": "^2.2.1",
+    "axios": "^0.26.1",
+    "node-fetch": "2",
+    "sass": "^1.49.9",
+    "stream-browserify": "^3.0.0",
+    "yaml": "^1.10.2"
+  }
+}
+
+</document_content>
+</document>
+<document index="2">
+<source>README.md</source>
+<document_content>
+# Geolonia PWAマップ
+
+## Geolonia PWAマップ について
+
+Geolonia PWA は、GitHub と Google Sheets を使って、素早く PWA の地図アプリが作れるテンプレートです。
+
+## フォーク
+
+まず、以下のリポジトリをフォークしてください。
+https://github.com/geoloniamaps/pwamap
+
+
+## サイト全体の設定
+
+`config.yml` を書き換えることでサイト全体の設定を変更できます。
+
+設定の例:
+```
+title: Geolonia PWAマップ
+description: Google スプレッドシートを更新するだけでオリジナルの地図アプリを作成できる\n「Geolonia PWAマップ」
+data_url: https://docs.google.com/spreadsheets/d/1_m8s4P5tdSeam3nzC5ruSfuvtSejQKEX1FiBeOWJN3E/pub?gid=1957425126&single=true&output=csv
+form_url: ""
+logo_image_url: https://geoloniamaps.github.io/pwamap/icon-pwamap.svg
+background_image_url: https://geoloniamaps.github.io/pwamap/geolonia_bgimage_1920_1080.png
+primary_color: "#d2691e"
+orderby: distance
+```
+
+- `title`: サイトのタイトルです。
+- `description`: サイトの概要文です。
+- `data_url`: アプリで読み込む CSV データまでの URL を記述してください。SSL は必須です。
+- `form_url`: データの追加/更新用の申請フォームの URL を記述してください。
+- `logo_image_url`: PCで表示した時のロゴ画像の URL を記述してください。
+- `background_image_url`: PCで表示した時の背景画像の URL を記述してください。
+- `primary_color`: サイトのテーマカラーを記述してください。（例: `#d2691e`）
+- `orderby`: 一覧ページのデータの並び順を指定します。`distance` で距離順に並び替えます。`time` で新着順に並び替えます。
+
+## スポットデータについて
+
+スポットは CSV 以下の方法でスポットデータファイルを作成して、`config.yml` にその CSV までの URL を設定してください。  
+
+- `緯度`、`経度`、`スポット名`、`カテゴリ` のみが必須で、これらのどれか一つでも入力されていないとアプリ上には表示されません。
+- なお、データは AJAX で常時読み込んでいますので、CSV が編集されるとほぼ同時にアプリ側にも反映されると考えてください。（キャッシュで多少タイムラグがあります。）
+
+### Google スプレッドシートを使う方法
+以下のスプレッドシートをコピーしてください。
+
+https://docs.google.com/spreadsheets/d/1_m8s4P5tdSeam3nzC5ruSfuvtSejQKEX1FiBeOWJN3E/edit?usp=sharing
+
+次に共有設定を行ってください。
+
+<img width="80%" alt="" src="https://github.com/user-attachments/assets/8a2f5031-ae90-4dd4-a2f1-4c2a1db70f42">
+
+
+Webへの公開設定で、「スポットデータ」シートを選択し、「カンマ区切り（.csv）」を選択して公開して下さい。
+
+
+<img width="80%" alt="" src="https://github.com/user-attachments/assets/7c437ceb-21a3-4f06-9abc-5f798c7ba44a">
+
+公開をクリックし、表示された URL を `config.yml` の `data_url` に指定して下さい。  
+GitHub Pages の設定をし、 コミットするとデータが反映されます。
+
+## 開発
+
+[Geolonia PWA マップ ユーザーマニュアル](https://blog.geolonia.com/2022/05/17/pwamap-manual-setup.html) の手順を実行、その後以下のコマンドを実行して下さい。
+
+```shell
+$ git clone git@github.com:geoloniamaps/pwa.git
+$ cd pwa
+$ npm install
+$ npm start
+```
+
+下の URL にアクセスして下さい。開発サーバーが立ち上がります。
+
+`http://localhost:3000/#/`
+
+
+## 注意事項
+このプログラムは自由にカスタマイズ可能ですが、利用についてはサポート対象外となります。
+
+
+</document_content>
+</document>
+<document index="3">
+<source>tsconfig.json</source>
+<document_content>
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "esnext"
+    ],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "strict": false,
+    "forceConsistentCasingInFileNames": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitAny": false
+  },
+  "include": [
+    "src"
+  ]
+}
+</document_content>
+</document>
+<document index="4">
+<source>bin\config.js</source>
+<document_content>
+/**
+ * @file YAML 形式の設定ファイルをパースし 環境変数として react-scripts に読み込ませる
+ */
+
+const fs = require("fs");
+const YAML = require("yaml");
+const path = require("path")
+
+const srcConfigFilePath = path.join(process.cwd(), "/config.yml");
+const distConfigFilePath = path.join(process.cwd(), "/src/config.json");
+
+let yamlText;
+try {
+  yamlText = fs.readFileSync(srcConfigFilePath).toString();
+} catch (error) {
+  process.stderr.write(`${srcConfigFilePath} が存在しません。\n`);
+  process.exit(1);
+}
+
+let config;
+try {
+  config = YAML.parse(yamlText);
+} catch (error) {
+  process.stderr.write(
+    `${srcConfigFilePath} は正しい YAML 形式である必要があります。\n`
+  );
+  process.exit(2);
+}
+
+if (!config) {
+  process.stderr.write(
+    `${srcConfigFilePath} は正しい YAML 形式である必要があります。\n`
+  );
+  process.exit(3);
+}
+
+const envText =
+  Object.keys(config)
+    // オブジェクト等は環境変数として出力しない
+    .filter((key) => typeof config[key] === "string" || typeof config[key] === "number")
+    .map((key) => `REACT_APP_${key.toUpperCase()}="${config[key]}"`)
+    .join("\n") + "\n";
+
+// 全ての設定は src/config.json として出力する
+fs.writeFileSync(distConfigFilePath, JSON.stringify(config, null, 2));
+
+fs.writeFileSync(path.join(process.cwd() , '.env'), envText)
+process.exit(0);
+
+</document_content>
+</document>
+<document index="5">
+<source>public\index.html</source>
+<document_content>
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <style>
+      :root {
+        --primary-color: %REACT_APP_PRIMARY_COLOR%;
+        --background-image: url(%REACT_APP_BACKGROUND_IMAGE_URL%);
+      }
+    </style>
+    <meta charset="utf-8">
+    <link href="./style.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/earlyaccess/nicomoji.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/github-fork-ribbon-css/0.2.3/gh-fork-ribbon.min.css">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,maximum-scale=1,viewport-fit=cover,minimal-ui,height=device-height">
+    <meta name="theme-color" content="#FFFFFF">
+    <meta name="description" content="%REACT_APP_TITLE%">
+    <meta name="apple-mobile-web-app-title" content="%REACT_APP_TITLE%">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta property="og:url" content="%REACT_APP_HOMEPAGE_URL%">
+    <meta property="og:title" content="%REACT_APP_TITLE%">
+    <meta property="og:image" content="%REACT_APP_HOMEPAGE_URL%apple-splash-1136-640.jpg">
+    <meta property="og:type" content="website">
+
+    <!--
+      manifest.json provides metadata used when your web app is installed on a
+      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
+    -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
+
+    <!--
+      Notice the use of %PUBLIC_URL% in the tags above.
+      It will be replaced with the URL of the `public` folder during the build.
+      Only files inside the `public` folder can be referenced from the HTML.
+      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
+      work correctly both with client-side routing and a non-root public URL.
+      Learn how to configure a non-root public URL by running `npm run build`.
+    -->
+    <title>%REACT_APP_TITLE%</title>
+    <link rel="icon" type="image/png" sizes="196x196" href="favicon-196.png">
+    <link rel="apple-touch-icon" href="apple-icon-180.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-startup-image" href="apple-splash-2048-2732.jpg" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2732-2048.jpg" media="(device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1668-2388.jpg" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2388-1668.jpg" media="(device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1536-2048.jpg" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2048-1536.jpg" media="(device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1668-2224.jpg" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2224-1668.jpg" media="(device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1620-2160.jpg" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2160-1620.jpg" media="(device-width: 810px) and (device-height: 1080px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1284-2778.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2778-1284.jpg" media="(device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1170-2532.jpg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2532-1170.jpg" media="(device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1125-2436.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2436-1125.jpg" media="(device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1242-2688.jpg" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2688-1242.jpg" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-828-1792.jpg" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1792-828.jpg" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1242-2208.jpg" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-2208-1242.jpg" media="(device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-750-1334.jpg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1334-750.jpg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+    <link rel="apple-touch-startup-image" href="apple-splash-640-1136.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="apple-splash-1136-640.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: landscape)">
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <div id="root">
+      <div class="loader"><img src="./manifest-icon-512.maskable.png" alt=""><br>%REACT_APP_TITLE%</div>
+    </div>
+    <a class="github-fork-ribbon" href="https://github.com/geoloniamaps/pwamap/" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+    <script type="text/javascript" src="https://cdn.geolonia.com/v1/embed?geolonia-api-key=YOUR-API-KEY"></script>
+  </body>
+</html>
+</document_content>
+</document>
+<document index="6">
+<source>public\manifest.json</source>
+<document_content>
+{
+  "short_name": "Geolonia PWA",
+  "name": "Geolonia PWA",
+  "icons": [
+    {
+      "src": "manifest-icon-192.maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "manifest-icon-192.maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "manifest-icon-512.maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "manifest-icon-512.maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#FFFFFF",
+  "background_color": "#ffffff"
+}
+</document_content>
+</document>
+<document index="7">
+<source>public\style.css</source>
+<document_content>
+html, body, #root
+{
+  width: 100%;
+  height: 100%;
+  -webkit-text-size-adjust: none;
+}
+
+#root
+{
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: none;
+}
+
+#root > .loader
+{
+  width: 192px;
+  font-size: 32px;
+  text-align: center;
+}
+
+img
+{
+  max-width: 100%;
+}
+
+@media only screen and (max-width: 960px) {
+  .github-fork-ribbon
+  {
+    display: none;
+  }
+
+  #root
+  {
+    background: none !important;
+  }
+}
+
+</document_content>
+</document>
+<document index="8">
+<source>src\App.tsx</source>
+<document_content>
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import "./App.scss";
+
+import Home from './App/Home'
+import List from './App/List'
+import AboutUs from './App/AboutUs'
+import Category from './App/Category'
+import Images from './App/Images'
+
+import Tabbar from './App/Tabbar'
+import config from "./config.json";
+import Papa from 'papaparse'
+
+// You can see config.json after running `npm start` or `npm run build`
+// import config from './config.json'
+
+const sortShopList = async (shopList: Pwamap.ShopData[]) => {
+
+  // 新着順にソート
+  return shopList.sort(function (item1, item2) {
+    return Date.parse(item2['タイムスタンプ']) - Date.parse(item1['タイムスタンプ'])
+  });
+
+}
+
+const App = () => {
+  const [shopList, setShopList] = React.useState<Pwamap.ShopData[]>([])
+
+  React.useEffect(() => {
+    fetch(config.data_url)
+    .then((response) => {
+      return response.ok ? response.text() : Promise.reject(response.status);
+    })
+    .then((data) => {
+
+      Papa.parse(data, {
+        header: true,
+        complete: (results) => {
+          const features = results.data
+
+          const nextShopList: Pwamap.ShopData[] = []
+          for (let i = 0; i < features.length; i++) {
+            const feature = features[i] as Pwamap.ShopData
+            if (!feature['緯度'] || !feature['経度'] || !feature['スポット名']) {
+              continue;
+            }
+            if (!feature['緯度'].match(/^[0-9]+(\.[0-9]+)?$/)) {
+              continue
+            }
+            if (!feature['経度'].match(/^[0-9]+(\.[0-9]+)?$/)) {
+              continue
+            }
+            const shop = {
+              // @ts-ignore
+              index: i,
+              ...feature
+            }
+
+            nextShopList.push(shop)
+          }
+          sortShopList(nextShopList).then((sortedShopList) => {
+            setShopList(sortedShopList)
+          })
+        }
+      });
+    });
+  }, [])
+
+
+  return (
+    <div className="app">
+      <div className="app-body">
+        <Routes>
+          <Route path="/" element={<Home data={shopList} />} />
+          <Route path="/list" element={<List data={shopList} />} />
+          <Route path="/category" element={<Category data={shopList} />} />
+          <Route path="/images" element={<Images data={shopList} />} />
+          <Route path="/about" element={<AboutUs />} />
+        </Routes>
+      </div>
+      <div className="app-footer">
+        <Tabbar />
+      </div>
+    </div>
+  );
+}
+
+export default App;
+
+</document_content>
+</document>
+<document index="9">
+<source>src\config.json</source>
+<document_content>
+{
+  "title": "佐和田料飲店マップ2025",
+  "description": "新潟県佐渡市佐和田町料飲店組合加盟店のMAPです",
+  "data_url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvUHoy7wWdYt4WjEy3fNyD2P89GtkTzuw45ILKKsDMnxQK_MpScN_8X98LFGC7Eoeguyk0ybGVUblZ/pub?gid=1957425126&single=true&output=csv",
+  "form_url": null,
+  "logo_image_url": "https://geoloniamaps.github.io/pwamap/icon-pwamap.svg",
+  "background_image_url": "https://geoloniamaps.github.io/pwamap/geolonia_bgimage_1920_1080.png",
+  "primary_color": "#d2691e",
+  "orderby": "distance"
+}
+</document_content>
+</document>
+<document index="10">
+<source>src\Container.tsx</source>
+<document_content>
+import React from "react";
+
+import App from './App'
+import About from './About'
+import './Container.scss'
+
+function Content() {
+  return (
+    <div className="outer-container">
+      <div className="inner-container">
+        <About />
+        <App />
+      </div>
+    </div>
+  );
+}
+
+export default Content;
+
+</document_content>
+</document>
+<document index="11">
+<source>src\geolocation.ts</source>
+<document_content>
+export const askGeolocationPermission = () => {
+  return new Promise<Pwamap.LngLat | null>((resolve, reject) => {
+
+    if(!window.navigator.geolocation || !window.navigator.geolocation.getCurrentPosition) {
+      resolve(null)
+    }
+
+    window.navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        resolve([lng, lat])
+      },
+      (error) => {
+        resolve(null)
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      }
+    )
+  })
+}
+
+</document_content>
+</document>
+<document index="12">
+<source>src\global.d.ts</source>
+<document_content>
+declare namespace Pwamap {
+  type ShopData = {
+    index: number;
+    distance?: number;
+    'タイムスタンプ': string;
+    '緯度': string;
+    '経度': string;
+    'スポット名': string;
+    'カテゴリ': string;
+    '紹介文': string;
+    '画像': string;
+    'URL': string;
+    'Instagram': string;
+    'Twitter': string;
+    'Facebook': string;
+    '公式サイト': string;
+    '営業時間': string;
+    '住所': string;
+    '定休日': string;
+    '創業年月': string;
+  }
+
+  type LngLat = [number, number]
+}
+
+</document_content>
+</document>
+<document index="13">
+<source>src\index.tsx</source>
+<document_content>
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { HashRouter } from "react-router-dom";
+import Container from './Container';
+import './index.scss'
+import * as serviceWorkerRegistration from './serviceWorkerRegistration';
+
+ReactDOM.render(
+  <React.StrictMode>
+    <HashRouter>
+      <Container />
+    </HashRouter>
+  </React.StrictMode>,
+  document.getElementById('root')
+);
+
+// If you want your app to work offline and load faster, you can change
+// unregister() to register() below. Note this comes with some pitfalls.
+// Learn more about service workers: https://bit.ly/CRA-PWA
+
+serviceWorkerRegistration.register();
+
+</document_content>
+</document>
+<document index="14">
+<source>src\Qrcode.tsx</source>
+<document_content>
+import { useQRCode } from 'next-qrcode';
+
+function Qrcode(props: { url: string }) {
+
+  const { url } = props;
+  const { Canvas } = useQRCode();
+
+  return (
+    <Canvas
+      text={url}
+      options={{
+        type: 'image/png',
+        margin: 0,
+        width: 128
+      }}
+    />
+  );
+}
+
+export default Qrcode;
+
+</document_content>
+</document>
+<document index="15">
+<source>src\react-app-env.d.ts</source>
+<document_content>
+/// <reference types="react-scripts" />
+
+</document_content>
+</document>
+<document index="16">
+<source>src\service-worker.ts</source>
+<document_content>
+/// <reference lib="webworker" />
+/* eslint-disable no-restricted-globals */
+
+// This service worker can be customized!
+// See https://developers.google.com/web/tools/workbox/modules
+// for the list of available Workbox modules, or add any other
+// code you'd like.
+// You can also remove this file if you'd prefer not to use a
+// service worker, and the Workbox build step will be skipped.
+
+import { clientsClaim } from 'workbox-core';
+import { ExpirationPlugin } from 'workbox-expiration';
+import { precacheAndRoute, createHandlerBoundToURL } from 'workbox-precaching';
+import { registerRoute } from 'workbox-routing';
+import { StaleWhileRevalidate } from 'workbox-strategies';
+
+declare const self: ServiceWorkerGlobalScope;
+
+clientsClaim();
+
+// Precache all of the assets generated by your build process.
+// Their URLs are injected into the manifest variable below.
+// This variable must be present somewhere in your service worker file,
+// even if you decide not to use precaching. See https://cra.link/PWA
+precacheAndRoute(self.__WB_MANIFEST);
+
+// Set up App Shell-style routing, so that all navigation requests
+// are fulfilled with your index.html shell. Learn more at
+// https://developers.google.com/web/fundamentals/architecture/app-shell
+const fileExtensionRegexp = new RegExp('/[^/?]+\\.[^/]+$');
+registerRoute(
+  // Return false to exempt requests from being fulfilled by index.html.
+  ({ request, url }: { request: Request; url: URL }) => {
+    // If this isn't a navigation, skip.
+    if (request.mode !== 'navigate') {
+      return false;
+    }
+
+    // If this is a URL that starts with /_, skip.
+    if (url.pathname.startsWith('/_')) {
+      return false;
+    }
+
+    // If this looks like a URL for a resource, because it contains
+    // a file extension, skip.
+    if (url.pathname.match(fileExtensionRegexp)) {
+      return false;
+    }
+
+    // Return true to signal that we want to use the handler.
+    return true;
+  },
+  createHandlerBoundToURL(process.env.PUBLIC_URL + '/index.html')
+);
+
+// An example runtime caching route for requests that aren't handled by the
+// precache, in this case same-origin .png requests like those from in public/
+registerRoute(
+  // Add in any other file extensions or routing criteria as needed.
+  ({ url }) => url.origin === self.location.origin && url.pathname.endsWith('.png'),
+  // Customize this strategy as needed, e.g., by changing to CacheFirst.
+  new StaleWhileRevalidate({
+    cacheName: 'images',
+    plugins: [
+      // Ensure that once this runtime cache reaches a maximum size the
+      // least-recently used images are removed.
+      new ExpirationPlugin({ maxEntries: 50 }),
+    ],
+  })
+);
+
+// This allows the web app to trigger skipWaiting via
+// registration.waiting.postMessage({type: 'SKIP_WAITING'})
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+// Any other custom service worker logic can go here.
+
+</document_content>
+</document>
+<document index="17">
+<source>src\serviceWorkerRegistration.ts</source>
+<document_content>
+// This optional code is used to register a service worker.
+// register() is not called by default.
+
+// This lets the app load faster on subsequent visits in production, and gives
+// it offline capabilities. However, it also means that developers (and users)
+// will only see deployed updates on subsequent visits to a page, after all the
+// existing tabs open on the page have been closed, since previously cached
+// resources are updated in the background.
+
+// To learn more about the benefits of this model and instructions on how to
+// opt-in, read https://cra.link/PWA
+
+const isLocalhost = Boolean(
+  window.location.hostname === 'localhost' ||
+    // [::1] is the IPv6 localhost address.
+    window.location.hostname === '[::1]' ||
+    // 127.0.0.0/8 are considered localhost for IPv4.
+    window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+);
+
+type Config = {
+  onSuccess?: (registration: ServiceWorkerRegistration) => void;
+  onUpdate?: (registration: ServiceWorkerRegistration) => void;
+};
+
+export function register(config?: Config) {
+  if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+    // The URL constructor is available in all browsers that support SW.
+    const publicUrl = new URL(process.env.PUBLIC_URL, window.location.href);
+    if (publicUrl.origin !== window.location.origin) {
+      // Our service worker won't work if PUBLIC_URL is on a different origin
+      // from what our page is served on. This might happen if a CDN is used to
+      // serve assets; see https://github.com/facebook/create-react-app/issues/2374
+      return;
+    }
+
+    window.addEventListener('load', () => {
+      const swUrl = `${process.env.PUBLIC_URL}/service-worker.js`;
+
+      if (isLocalhost) {
+        // This is running on localhost. Let's check if a service worker still exists or not.
+        checkValidServiceWorker(swUrl, config);
+
+        // Add some additional logging to localhost, pointing developers to the
+        // service worker/PWA documentation.
+        navigator.serviceWorker.ready.then(() => {
+          console.log(
+            'This web app is being served cache-first by a service ' +
+              'worker. To learn more, visit https://cra.link/PWA'
+          );
+        });
+      } else {
+        // Is not localhost. Just register service worker
+        registerValidSW(swUrl, config);
+      }
+    });
+  }
+}
+
+function registerValidSW(swUrl: string, config?: Config) {
+  navigator.serviceWorker
+    .register(swUrl)
+    .then((registration) => {
+      registration.onupdatefound = () => {
+        const installingWorker = registration.installing;
+        if (installingWorker == null) {
+          return;
+        }
+        installingWorker.onstatechange = () => {
+          if (installingWorker.state === 'installed') {
+            if (navigator.serviceWorker.controller) {
+              // At this point, the updated precached content has been fetched,
+              // but the previous service worker will still serve the older
+              // content until all client tabs are closed.
+              console.log(
+                'New content is available and will be used when all ' +
+                  'tabs for this page are closed. See https://cra.link/PWA.'
+              );
+
+              // Execute callback
+              if (config && config.onUpdate) {
+                config.onUpdate(registration);
+              }
+            } else {
+              // At this point, everything has been precached.
+              // It's the perfect time to display a
+              // "Content is cached for offline use." message.
+              console.log('Content is cached for offline use.');
+
+              // Execute callback
+              if (config && config.onSuccess) {
+                config.onSuccess(registration);
+              }
+            }
+          }
+        };
+      };
+    })
+    .catch((error) => {
+      console.error('Error during service worker registration:', error);
+    });
+}
+
+function checkValidServiceWorker(swUrl: string, config?: Config) {
+  // Check if the service worker can be found. If it can't reload the page.
+  fetch(swUrl, {
+    headers: { 'Service-Worker': 'script' },
+  })
+    .then((response) => {
+      // Ensure service worker exists, and that we really are getting a JS file.
+      const contentType = response.headers.get('content-type');
+      if (
+        response.status === 404 ||
+        (contentType != null && contentType.indexOf('javascript') === -1)
+      ) {
+        // No service worker found. Probably a different app. Reload the page.
+        navigator.serviceWorker.ready.then((registration) => {
+          registration.unregister().then(() => {
+            window.location.reload();
+          });
+        });
+      } else {
+        // Service worker found. Proceed as normal.
+        registerValidSW(swUrl, config);
+      }
+    })
+    .catch(() => {
+      console.log('No internet connection found. App is running in offline mode.');
+    });
+}
+
+export function unregister() {
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.ready
+      .then((registration) => {
+        registration.unregister();
+      })
+      .catch((error) => {
+        console.error(error.message);
+      });
+  }
+}
+
+</document_content>
+</document>
+<document index="18">
+<source>src\setupTests.ts</source>
+<document_content>
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom/extend-expect';
+
+</document_content>
+</document>
+<document index="19">
+<source>src\types.d.ts</source>
+<document_content>
+interface Window {
+  geolonia: any;
+} 
+</document_content>
+</document>
+<document index="20">
+<source>src\App\Category.tsx</source>
+<document_content>
+import React from "react";
+import Select from 'react-select'
+import { useNavigate } from 'react-router-dom';
+import './Category.scss'
+
+type Props = {
+  data: Pwamap.ShopData[];
+}
+
+const Content = (props: Props) => {
+
+  const navigate = useNavigate();
+
+  const [categoryList, setCategoryList] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+
+    let categories: string[] = []
+
+    for (let i = 0; i < props.data.length; i++) {
+      const shop = props.data[i];
+
+      if (categories.indexOf(shop['カテゴリ']) === -1) {
+
+        categories.push(shop['カテゴリ'])
+      }
+
+    }
+
+    setCategoryList(categories)
+
+  }, [props.data])
+
+
+  return (
+    <>
+      <div className="head"></div>
+      <div className="category">
+        <div className="container">
+          <div className="category-item">
+            <label htmlFor="category-select">カテゴリから選ぶ</label>
+            <Select
+              onChange={(e) => {
+                if (e) {
+                  navigate(`/list?category=${e.value}`);
+                }
+              }}
+              options={
+                categoryList.map(category => {
+                  return {
+                    value: category,
+                    label: category
+                  }
+                })
+              }
+            />
+          </div>
+
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Content;
+
+</document_content>
+</document>
+<document index="21">
+<source>src\App\Home.tsx</source>
+<document_content>
+import React, { useState, useEffect } from 'react';
+import Map from './Map';
+import Shop from './Shop';
+import SearchFeature from './SearchFeature';
+import './Home.scss';
+
+type HomeProps = {
+  data: Pwamap.ShopData[];
+};
+
+const Home: React.FC<HomeProps> = (props) => {
+  const [data, setData] = useState<Pwamap.ShopData[]>([]);
+  const [selectedShop, setSelectedShop] = useState<Pwamap.ShopData | undefined>(undefined);
+  const [filteredShops, setFilteredShops] = useState<Pwamap.ShopData[]>([]);
+
+  // 親コンポーネントからのデータを設定
+  useEffect(() => {
+    if (props.data.length > 0) {
+      setData(props.data);
+      setFilteredShops(props.data);
+    }
+  }, [props.data]);
+
+  // 検索結果を受け取るハンドラ
+  const handleSearchResults = (results: Pwamap.ShopData[]) => {
+    setFilteredShops(results);
+  };
+
+  // 店舗選択ハンドラ
+  const handleSelectShop = (shop: Pwamap.ShopData) => {
+    setSelectedShop(shop);
+  };
+
+  // Shop閉じる処理
+  const handleCloseShop = () => {
+    setSelectedShop(undefined);
+  };
+
+  return (
+    <div className="home">
+      <SearchFeature 
+        data={data}
+        onSelectShop={handleSelectShop}
+        onSearchResults={handleSearchResults}
+      />
+      <Map 
+        data={filteredShops} 
+        selectedShop={selectedShop}
+        onSelectShop={handleSelectShop}
+        initialData={props.data}
+      />
+      {selectedShop && (
+        <Shop 
+          shop={selectedShop} 
+          close={handleCloseShop} 
+        />
+      )}
+    </div>
+  );
+};
+
+export default Home;
+</document_content>
+</document>
+<document index="22">
+<source>src\App\Images.tsx</source>
+<document_content>
+import { useEffect, useState } from 'react'
+import { ImageList, ImageListItem } from '@material-ui/core'
+import Shop from './Shop'
+import './Images.scss'
+
+type Props = {
+  data: Pwamap.ShopData[];
+}
+
+const Content = (props: Props) => {
+
+  const { data } = props;
+  const [validImageList, setValidImageList ] = useState<JSX.Element[]>([]);
+  const [shop, setShop] = useState<Pwamap.ShopData | undefined>()
+
+  const popupHandler = (shop: Pwamap.ShopData) => {
+    if (shop) {
+      setShop(shop)
+    }
+  }
+
+  const closeHandler = () => {
+    setShop(undefined)
+  }
+
+  useEffect(() => {
+
+    let imageListItems = []
+
+    for (let i = 0; i < data.length; i++) {
+      const item = data[i];
+
+      if (item['画像']) {
+
+        imageListItems.push(
+          <ImageListItem
+            key={i}
+            className="mui-image-list-item"
+          >
+            <img
+              src={item['画像']}
+              alt={item['スポット名']}
+              loading="lazy"
+              onClick={() => popupHandler(item)}
+              onError={e => {
+                //@ts-ignore
+                e.target.parentNode.remove()
+              }}
+            />
+          </ImageListItem>
+        )
+      }
+    }
+
+    setValidImageList(imageListItems)
+
+  }, [data])
+
+  return (
+    <>
+      <div className="head"></div>
+      <div className="images">
+        <div className="container">
+          <ImageList id="mui-image-list" sx={{ width: "100%", height: "100%" }} cols={2} rowHeight={164}>
+            {validImageList}
+          </ImageList>
+          {shop ?
+            <Shop shop={shop} close={closeHandler} />
+            :
+            <></>
+          }
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Content;
+
+</document_content>
+</document>
+<document index="23">
+<source>src\App\Links.tsx</source>
+<document_content>
+import React from "react";
+import { FaTwitter, FaInstagram, FaHome, FaFacebook } from 'react-icons/fa';
+
+import './Links.scss'
+
+type Props = {
+  data: Pwamap.ShopData;
+};
+
+const noop = (e: React.MouseEvent) => {
+  e.stopPropagation()
+}
+
+const Content = (props: Props) => {
+
+  return (
+    <div className="links">
+      {props.data['Instagram']?<div className="link"><a href={`https://instagram.com/${props.data['Instagram']}`}><FaInstagram onClick={noop} size="20px" /></a></div>:''}
+      {props.data['Twitter']?<div className="link"><a href={`https://twitter.com/${props.data['Twitter']}`}><FaTwitter onClick={noop} size="20px" /></a></div>:''}
+      {props.data['Facebook']?<div className="link"><a href={`https://www.facebook.com/${props.data['Facebook']}`}><FaFacebook onClick={noop} size="20px" /></a></div>:''}
+      {props.data['公式サイト']?<div className="link"><a href={props.data['公式サイト']}><FaHome onClick={noop} size="20px" /></a></div>:''}
+    </div>
+  );
+};
+
+export default Content;
+
+</document_content>
+</document>
+<document index="24">
+<source>src\App\List.tsx</source>
+<document_content>
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import ShopListItem from './ShopListItem'
+import Shop from './Shop'
+import './List.scss'
+import { useSearchParams } from "react-router-dom";
+import InfiniteScroll from 'react-infinite-scroll-component';
+import { askGeolocationPermission } from '../geolocation'
+import * as turf from "@turf/turf"
+
+// スケルトンローディングコンポーネント
+const SkeletonItem = React.memo(() => (
+  <div className="shop-list-item skeleton">
+    <div className="skeleton-content">
+      <div className="skeleton-title"></div>
+      <div className="skeleton-text"></div>
+    </div>
+    <div className="skeleton-image"></div>
+  </div>
+));
+
+type Props = {
+  data: Pwamap.ShopData[];
+}
+
+// 距離計算を行う非同期関数
+const calculateDistances = async (shopList: Pwamap.ShopData[], signal: AbortSignal) => {
+  try {
+    if (signal.aborted) return shopList;
+    
+    const currentPosition = await askGeolocationPermission();
+    if (!currentPosition || signal.aborted) return shopList;
+    
+    const from = turf.point(currentPosition);
+    return shopList.map((shop) => {
+      const lng = parseFloat(shop['経度'])
+      const lat = parseFloat(shop['緯度'])
+      if(Number.isNaN(lng) || Number.isNaN(lat)) {
+        return shop
+      } else {
+        const to = turf.point([lng, lat])
+        const distance = turf.distance(from, to, {units: 'meters' as 'meters'});
+        return { ...shop, distance }
+      }
+    }).sort((a,b) => {
+      if(typeof a.distance !== 'number' || Number.isNaN(a.distance)) {
+        return 1
+      } else if (typeof b.distance !== 'number' || Number.isNaN(b.distance)) {
+        return -1
+      } else {
+        return a.distance - b.distance
+      }
+    });
+  } catch (error) {
+    console.warn('位置情報取得エラー:', error);
+    return shopList;
+  }
+}
+
+const Content = (props: Props) => {
+  const [shop, setShop] = useState<Pwamap.ShopData | undefined>(undefined);
+  const [filteredData, setFilteredData] = useState<Pwamap.ShopData[]>([]);
+  const [list, setList] = useState<Pwamap.ShopData[]>([]);
+  const [page, setPage] = useState(20); // 初期表示を20件に増加
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isDistanceCalculated, setIsDistanceCalculated] = useState(false);
+
+  // マウント状態を追跡
+  const isMountedRef = useRef(true);
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  const [searchParams] = useSearchParams();
+  const queryCategory = searchParams.get('category');
+
+  // コンポーネントのアンマウント時にクリーンアップ
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      
+      // 実行中の非同期処理をキャンセル
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  // カテゴリでデータをフィルタリング（メモ化）
+  const filteredByCategory = useMemo(() => {
+    if (!queryCategory) return props.data;
+    return props.data.filter((shop) => shop['カテゴリ'] === queryCategory);
+  }, [props.data, queryCategory]);
+
+  // 初期データ設定
+  useEffect(() => {
+    // 初期表示のためのデータをすぐに設定
+    setFilteredData(filteredByCategory);
+    setList(filteredByCategory.slice(0, page));
+    setHasMore(filteredByCategory.length > page);
+    
+    // 位置情報取得と距離計算を非同期で開始（UIをブロックしない）
+    const orderBy = process.env.REACT_APP_ORDERBY;
+    if (orderBy === 'distance' && !isDistanceCalculated) {
+      setIsLoading(true);
+      
+      // 前回の非同期処理があればキャンセル
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      
+      // 新しい AbortController を作成
+      abortControllerRef.current = new AbortController();
+      const { signal } = abortControllerRef.current;
+      
+      calculateDistances(filteredByCategory, signal)
+        .then(sortedData => {
+          if (isMountedRef.current && !signal.aborted) {
+            setFilteredData(sortedData);
+            setList(sortedData.slice(0, page));
+            setIsDistanceCalculated(true);
+            setIsLoading(false);
+          }
+        })
+        .catch(error => {
+          if (error.name !== 'AbortError' && isMountedRef.current) {
+            console.warn('距離計算エラー:', error);
+            setIsLoading(false);
+          }
+        });
+    }
+    
+    // クリーンアップ関数
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [filteredByCategory, page, isDistanceCalculated]);
+
+  // ポップアップ表示ハンドラ
+  const popupHandler = useCallback((shop: Pwamap.ShopData) => {
+    if (isMountedRef.current) {
+      setShop(shop);
+    }
+  }, []);
+
+  // ポップアップ閉じるハンドラ
+  const closeHandler = useCallback(() => {
+    if (isMountedRef.current) {
+      setShop(undefined);
+    }
+  }, []);
+
+  // 追加データ読み込みハンドラ（メモ化して最適化）
+  const loadMore = useCallback(() => {
+    if (!isMountedRef.current || list.length >= filteredData.length) {
+      setHasMore(false);
+      return;
+    }
+    
+    const nextItems = filteredData.slice(list.length, list.length + 20);
+    setList(prev => [...prev, ...nextItems]);
+  }, [list.length, filteredData]);
+
+  // スケルトンローダー（リスト項目がロード中の場合に表示）
+  const skeletonLoader = (
+    <div className="skeleton-container">
+      {Array(3).fill(0).map((_, index) => (
+        <SkeletonItem key={`skeleton-${index}`} />
+      ))}
+    </div>
+  );
+
+  return (
+    <div id="shop-list" className="shop-list">
+      {queryCategory && <div className="shop-list-category">{`カテゴリ：「${queryCategory}」`}</div>}
+
+      <InfiniteScroll
+        dataLength={list.length}
+        next={loadMore}
+        hasMore={hasMore}
+        loader={<div className="list-loader" key="loader"></div>}
+        scrollableTarget="shop-list"
+        endMessage={<div className="list-end-message">すべての場所を表示しました</div>}
+      >
+        {list.length === 0 && isLoading ? skeletonLoader : 
+          list.map((item, index) => (
+            <div key={`shop-${index}-${item.index}`} className="shop">
+              <ShopListItem
+                data={item}
+                popupHandler={popupHandler}
+                queryCategory={queryCategory}
+              />
+            </div>
+          ))
+        }
+      </InfiniteScroll>
+      
+      {shop && <Shop shop={shop} close={closeHandler} />}
+    </div>
+  );
+};
+
+export default React.memo(Content);
+</document_content>
+</document>
+<document index="25">
+<source>src\App\Map.tsx</source>
+<document_content>
+import React, { useRef, useState, useEffect } from "react";
+// @ts-ignore
+import geojsonExtent from '@mapbox/geojson-extent';
+import toGeoJson from './toGeoJson';
+import setCluster from './setCluster';
+import Qrcode from './Qrcode'; // Corrected import path
+
+type Props = {
+  data: Pwamap.ShopData[];
+  selectedShop?: Pwamap.ShopData;
+  onSelectShop: (shop: Pwamap.ShopData) => void;
+  initialData?: Pwamap.ShopData[];
+};
+
+const CSS: React.CSSProperties = {
+  width: '100%',
+  height: '100%',
+  position: 'relative',
+};
+
+const hidePoiLayers = (map: any) => {
+  // ... (unchanged) ...
+};
+
+const Content = (props: Props) => {
+  const { data, selectedShop, onSelectShop } = props; // Destructure props
+  const mapNode = useRef<HTMLDivElement>(null);
+  const [mapObject, setMapObject] = useState<any>(null);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    if (mapObject || !mapNode.current) return;
+
+    let map: any = null;
+    try {
+      if (!window.geolonia) {
+        console.error('Geolonia is not loaded');
+        return;
+      }
+      map = new window.geolonia.Map({
+        container: mapNode.current,
+        style: 'geolonia/gsi',
+        attributionControl: false,
+      });
+      if (isMounted.current) setMapObject(map);
+    } catch (error) {
+      console.error('Error initializing map:', error);
+    }
+    return () => {
+      isMounted.current = false;
+      if (map) map.remove();
+    };
+  }, []); // Empty dependency array: runs only once on mount
+
+
+  useEffect(() => {
+    if (!mapObject || !isMounted.current) return;
+
+    const handleShopClick = (event: any) => {
+      if (!event.features[0].properties.cluster && isMounted.current) {
+        onSelectShop(event.features[0].properties);
+        // Show popup with QR code
+        new window.geolonia.Popup()
+          .setLngLat(event.lngLat)
+          .setHTML(`
+            <h3>${event.features[0].properties['スポット名']}</h3>
+            <Qrcode url={"https://example.com/shop/" + event.features[0].properties['id']} />
+          `)
+          .addTo(mapObject);
+
+      }
+    };
+
+    const setupMapData = () => {
+      try {
+        hidePoiLayers(mapObject);
+        if (data && data.length > 0) {
+          const geojson = toGeoJson(data);
+          if (mapObject.getSource('shops')) {
+            mapObject.getSource('shops').setData(geojson);
+          } else {
+            mapObject.addSource('shops', {
+              type: 'geojson',
+              data: geojson,
+              cluster: true,
+              clusterMaxZoom: 14,
+              clusterRadius: 25,
+            });
+
+            mapObject.addLayer({
+              id: 'shop-points',
+              type: 'circle',
+              source: 'shops',
+              // ... (rest of the layer definition) ...
+            });
+
+            mapObject.addLayer({
+              id: 'shop-symbol',
+              type: 'symbol',
+              source: 'shops',
+              // ... (rest of the layer definition) ...
+            });
+            mapObject.on('click', 'shop-points', handleShopClick);
+            mapObject.on('click', 'shop-symbol', handleShopClick);
+            setCluster(mapObject);
+          }
+          if (!selectedShop) {
+            const bounds = geojsonExtent(geojson);
+            if (bounds) mapObject.fitBounds(bounds, { padding: 50 });
+          }
+        }
+      } catch (error) {
+        console.error('Error setting up map data:', error);
+      }
+    };
+
+    if (mapObject.loaded()) {
+      setupMapData();
+    } else {
+      mapObject.once('load', setupMapData);
+    }
+    return () => {
+      if (mapObject) {
+        mapObject.off('click', 'shop-points', handleShopClick);
+        mapObject.off('click', 'shop-symbol', handleShopClick);
+        mapObject.off('load', setupMapData);
+      }
+    };
+  }, [mapObject, data, selectedShop, onSelectShop]); // Correct dependencies
+
+
+  useEffect(() => {
+    if (!mapObject || !selectedShop || !isMounted.current) return;
+    try {
+      const lat = parseFloat(selectedShop['緯度']);
+      const lng = parseFloat(selectedShop['経度']);
+      if (!isNaN(lat) && !isNaN(lng)) {
+        mapObject.flyTo({
+          center: [lng, lat],
+          zoom: 17,
+          duration: 500,
+        });
+      }
+    } catch (error) {
+      console.warn('Error centering map on selected shop:', error);
+    }
+  }, [mapObject, selectedShop]); // Correct dependencies
+
+
+  return (
+    <div style={CSS}>
+      <div
+        ref={mapNode}
+        style={{ ...CSS, marginTop: '90px' }}
+        data-geolocate-control="on"
+        data-marker="off"
+        data-gesture-handling="off"
+      />
+    </div>
+  );
+};
+
+export default Content;
+
+
+</document_content>
+</document>
+<document index="26">
+<source>src\App\SearchFeature.tsx</source>
+<document_content>
+import React, { useState, useEffect, useCallback } from 'react';
+import './SearchFeature.scss';
+
+type SearchFeatureProps = {
+  data: Pwamap.ShopData[];
+  onSearchResults: (results: Pwamap.ShopData[]) => void;
+  onSelectShop: (shop: Pwamap.ShopData) => void;
+};
+
+const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, onSelectShop }) => {
+  const [query, setQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [isOpenNow, setIsOpenNow] = useState(false);
+  const [hasParking, setHasParking] = useState(false);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [results, setResults] = useState<Pwamap.ShopData[]>([]);
+  const [showResults, setShowResults] = useState(false);
+
+  // カテゴリ一覧を作成
+  useEffect(() => {
+    if (data.length > 0) {
+      const uniqueCategories = Array.from(new Set(data.map(shop => shop['カテゴリ']))).filter(Boolean);
+      setCategories(uniqueCategories);
+    }
+  }, [data]);
+
+  // フィルタリング処理
+  const filterShops = useCallback(() => {
+    let filtered = data;
+
+    // テキスト検索
+    if (query.trim() !== '') {
+      filtered = filtered.filter(shop => {
+        return Object.entries(shop).some(([_, value]) => {
+          if (typeof value === 'string') {
+            return value.toLowerCase().includes(query.toLowerCase());
+          }
+          return false;
+        });
+      });
+    }
+
+    // カテゴリでフィルタリング
+    if (selectedCategory) {
+      filtered = filtered.filter(shop => shop['カテゴリ'] === selectedCategory);
+    }
+
+    // 営業中でフィルタリング
+    if (isOpenNow) {
+      const now = new Date();
+      const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
+      const currentHour = now.getHours();
+      const currentMinute = now.getMinutes();
+      const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+      filtered = filtered.filter(shop => {
+        // 定休日チェック
+        if (shop['定休日'] && shop['定休日'].includes(dayOfWeek)) {
+          return false;
+        }
+
+        // 営業時間チェック
+        if (shop['営業時間']) {
+          const timeRangeMatch = shop['営業時間'].match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
+          if (timeRangeMatch) {
+            const [, startHourStr, startMinuteStr, endHourStr, endMinuteStr] = timeRangeMatch;
+            const startHour = parseInt(startHourStr, 10);
+            const startMinute = parseInt(startMinuteStr, 10);
+            const endHour = parseInt(endHourStr, 10);
+            const endMinute = parseInt(endMinuteStr, 10);
+
+            const startTimeMinutes = startHour * 60 + startMinute;
+            const endTimeMinutes = endHour * 60 + endMinute;
+
+            return currentTimeMinutes >= startTimeMinutes && currentTimeMinutes <= endTimeMinutes;
+          }
+        }
+
+        // 営業時間の形式が不明確な場合はデフォルトで表示
+        return true;
+      });
+    }
+
+    // 駐車場でフィルタリング
+    if (hasParking) {
+      filtered = filtered.filter(shop => {
+        if (!shop['駐車場']) return false;
+        
+        // 数字が含まれている場合
+        const parkingCountMatch = shop['駐車場'].match(/(\d+)/);
+        if (parkingCountMatch) {
+          const parkingCount = parseInt(parkingCountMatch[1], 10);
+          return parkingCount > 0;
+        }
+        
+        // "有り"などのテキストの場合
+        return shop['駐車場'].includes('有') || shop['駐車場'].includes('あり');
+      });
+    }
+
+    setResults(filtered);
+    onSearchResults(filtered);
+  }, [data, query, selectedCategory, isOpenNow, hasParking, onSearchResults]);
+
+  // フィルター条件が変わったら再フィルタリング
+  useEffect(() => {
+    filterShops();
+  }, [filterShops]);
+
+  // 検索入力ハンドラー
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuery(e.target.value);
+    setShowResults(e.target.value.trim() !== '');
+  };
+
+  // カテゴリ選択ハンドラー
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCategory(e.target.value);
+  };
+
+  // 結果アイテムクリックハンドラー
+  const handleResultClick = (shop: Pwamap.ShopData) => {
+    onSelectShop(shop);
+    setShowResults(false);
+  };
+
+  return (
+    <div className="search-feature">
+      <div className="search-input-container">
+        <input
+          type="text"
+          placeholder="スポットを検索..."
+          value={query}
+          onChange={handleInputChange}
+          className="search-input"
+        />
+      </div>
+
+      <div className="filter-container">
+        <div className="filter-item category-filter">
+          <select
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+            className={`filter-select ${selectedCategory ? 'active' : ''}`}
+          >
+            <option value="">カテゴリ ▼</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </div>
+        
+        <div className="filter-item">
+          <button
+            className={`filter-button ${isOpenNow ? 'active' : ''}`}
+            onClick={() => setIsOpenNow(!isOpenNow)}
+          >
+            現在営業中 ▼
+          </button>
+        </div>
+        
+        <div className="filter-item">
+          <button
+            className={`filter-button ${hasParking ? 'active' : ''}`}
+            onClick={() => setHasParking(!hasParking)}
+          >
+            駐車場有り
+          </button>
+        </div>
+      </div>
+
+      {showResults && (
+        <div className="search-results">
+          {results.length === 0 ? (
+            <div className="no-results">該当する店舗がありません</div>
+          ) : (
+            <div className="results-list">
+              {results.slice(0, 10).map((shop, index) => (
+                <div
+                  key={`shop-result-${index}`}
+                  className="result-item"
+                  onClick={() => handleResultClick(shop)}
+                >
+                  <div className="result-name">{shop['スポット名']}</div>
+                  <div className="result-category">{shop['カテゴリ']}</div>
+                </div>
+              ))}
+              {results.length > 10 && (
+                <div className="more-results">
+                  他 {results.length - 10} 件の結果があります
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SearchFeature;
+</document_content>
+</document>
+<document index="27">
+<source>src\App\SearchResultsPanel.tsx</source>
+<document_content>
+import React, { useEffect, useRef } from 'react';
+import SearchResultItem from './SearchResultItem';
+import './SearchResultsPanel.scss';
+
+type SearchResultsPanelProps = {
+  results: Pwamap.ShopData[];
+  visible: boolean;
+  onSelectShop: (shop: Pwamap.ShopData) => void;
+};
+
+const SearchResultsPanel: React.FC<SearchResultsPanelProps> = ({ 
+  results, 
+  visible, 
+  onSelectShop 
+}) => {
+  const panelRef = useRef<HTMLDivElement>(null);
+  
+  // 検索バーの幅と位置に合わせる
+  useEffect(() => {
+    if (!panelRef.current || !visible) return;
+    
+    const searchBarContainer = document.querySelector('.search-bar-container');
+    if (!searchBarContainer) return;
+    
+    // 検索バーのスタイルを取得して同期
+    const searchBarRect = searchBarContainer.getBoundingClientRect();
+    const panelElement = panelRef.current;
+    
+    // 検索バーと同じ幅と左位置を確保
+    panelElement.style.width = `${searchBarRect.width}px`;
+    panelElement.style.left = `${searchBarRect.left}px`;
+  }, [visible, results]);
+  
+  if (!visible) return null;
+  
+  return (
+    <div 
+      className="search-results-panel" 
+      ref={panelRef}
+    >
+      {results.length === 0 ? (
+        <div className="no-results">該当する店舗がありません</div>
+      ) : (
+        <div className="results-list">
+          {results.map((shop, index) => (
+            <SearchResultItem 
+              key={index} 
+              shop={shop} 
+              onClick={() => onSelectShop(shop)} 
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SearchResultsPanel;
+</document_content>
+</document>
+<document index="28">
+<source>src\App\setCluster.ts</source>
+<document_content>
+const setCluster = (map: any) => {
+  map.addLayer({
+    id: 'clusters',
+    type: 'circle',
+    source: 'shops',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-radius': 20,
+      'circle-color': '#FF0000',
+      'circle-opacity': 1.0,
+    },
+  })
+
+  map.addLayer({
+    id: 'cluster-count',
+    type: 'symbol',
+    source: 'shops',
+    filter: ['has', 'point_count'],
+    paint: {
+      'text-color': '#FFFFFF',
+    },
+    layout: {
+      'text-field': '{point_count_abbreviated} 件',
+      'text-size': 12,
+      'text-font': ['Noto Sans Regular'],
+    },
+  })
+
+  map.on('click', 'clusters', (e: any) => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ['clusters'] })
+    const clusterId = features[0].properties.cluster_id
+    map.getSource('shops').getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
+      if (err)
+        return
+
+      map.easeTo({
+        center: features[0].geometry.coordinates,
+        zoom: zoom,
+      })
+    })
+  })
+
+  map.on('mouseenter', 'clusters', function () {
+    map.getCanvas().style.cursor = 'pointer'
+  })
+
+  map.on('mouseleave', 'clusters', function () {
+    map.getCanvas().style.cursor = ''
+  })
+}
+
+export default setCluster;
+
+</document_content>
+</document>
+<document index="29">
+<source>src\App\Share.tsx</source>
+<document_content>
+import React from "react";
+import { FacebookShareButton, LineShareButton, TwitterShareButton } from "react-share";
+import { FacebookIcon, LineIcon, TwitterIcon } from "react-share";
+import config from '../config.json'
+
+import './Share.scss'
+
+const Content = () => {
+  const url = window.location.href.replace(/\?.+$/, '').replace(/#.+$/, '')
+
+  return (
+    <div className="share">
+      <ul>
+        <li><a href="/"><TwitterShareButton url={url} hashtags={[`${config.title}`]} title={`${config.title}`}><TwitterIcon size={32} round={true} /></TwitterShareButton></a></li>
+        <li><a href="/"><FacebookShareButton url={url} hashtag={`#${config.title}`}><FacebookIcon size={32} round={true} /></FacebookShareButton></a></li>
+        <li><a href="/"><LineShareButton url={url} title={`${config.title}`}><LineIcon size={32} round={true} /></LineShareButton></a></li>
+      </ul>
+    </div>
+  );
+};
+
+export default Content;
+
+</document_content>
+</document>
+<document index="30">
+<source>src\App\Shop.tsx</source>
+<document_content>
+import React from "react";
+import Links from './Links'
+import './Shop.scss'
+import { AiOutlineClose } from 'react-icons/ai'
+import { Link } from "react-router-dom";
+import { makeDistanceLabelText } from "./distance-label";
+
+type Props = {
+  shop: Pwamap.ShopData;
+  close: Function;
+}
+
+const Content = (props: Props) => {
+  const mapNode = React.useRef<HTMLDivElement>(null);
+  const [map, setMap] = React.useState<any>(null)
+  const { shop } = props
+
+  const clickHandler = () => {
+    props.close()
+    if(mapNode.current) {
+      mapNode.current.remove()
+      map.remove()
+    }
+  }
+
+  React.useEffect(() => {
+    if (!mapNode.current) {
+      return
+    }
+
+    // @ts-ignore
+    const nextMap = new window.geolonia.Map({
+      container: mapNode.current,
+      interactive: false,
+      zoom: 14,
+      style: `geolonia/gsi`,
+    });
+    setMap(nextMap)
+  }, [shop, mapNode])
+
+  const distanceTipText = makeDistanceLabelText(shop.distance)
+  const category = shop['カテゴリ']
+  const content = shop['紹介文']
+
+  const toBreakLine = (text: string) => {
+    return text.split(/(\r\n)|(\n)|(\r)/g).map((line, i) => {
+      let result: any = '';
+      if (line === '\r\n' || line === '\n' || line === '\r') {
+        result = <br key={i} />
+      } else if (line !== undefined) {
+        result = line
+      }
+      return result
+    })
+  }
+
+  // 複数の画像を表示
+  const renderImages = () => {
+    const images = [];
+    
+    if (shop['画像']) images.push(shop['画像']);
+    if (shop['画像2']) images.push(shop['画像2']);
+    if (shop['画像3']) images.push(shop['画像3']);
+    if (shop['画像4']) images.push(shop['画像4']);
+    if (shop['画像5']) images.push(shop['画像5']);
+    
+    return images.map((img, index) => (
+      <img key={index} src={img} alt={`${shop['スポット名']} - 画像${index + 1}`} className="shop-image" />
+    ));
+  };
+
+  return (
+    <div className="shop-single">
+      <div className="head">
+        <button onClick={clickHandler}><AiOutlineClose size="16px" color="#FFFFFF" /> 閉じる</button>
+      </div>
+      <div className="container">
+        {shop?
+          <>
+            <h2>{shop['スポット名']}</h2>
+            <div>
+              <span className="nowrap">
+                <Link to={`/list?category=${category}`}>
+                  <span onClick={clickHandler} className="category">{category}</span>
+                </Link>
+              </span>
+              <span className="nowrap">{distanceTipText && <span className="distance">現在位置から {distanceTipText}</span> }</span>
+            </div>
+
+            <div className="shop-info-box">
+              {shop['営業時間'] && (
+                <div className="info-item">
+                  <span className="info-label">営業時間:</span> {shop['営業時間']}
+                </div>
+              )}
+              {shop['駐車場'] && (
+                <div className="info-item">
+                  <span className="info-label">駐車場:</span> {shop['駐車場']}
+                </div>
+              )}
+              {shop['定休日'] && (
+                <div className="info-item">
+                  <span className="info-label">定休日:</span> {shop['定休日']}
+                </div>
+              )}
+              {shop['住所'] && (
+                <div className="info-item">
+                  <span className="info-label">住所:</span> {shop['住所']}
+                </div>
+              )}
+              {shop['創業年月'] && (
+                <div className="info-item">
+                  <span className="info-label">創業年月:</span> {shop['創業年月']}
+                </div>
+              )}
+            </div>
+
+            <div style={{margin: "24px 0"}}><Links data={shop} /></div>
+
+            <div className="shop-images">
+              {renderImages()}
+            </div>
+
+            <p style={{margin: "24px 0", wordBreak: "break-all"}}>{toBreakLine(content)}</p>
+
+            <div
+              ref={mapNode}
+              style={{width: '100%', height: '200px', marginTop: "24px"}}
+              data-lat={shop['緯度']}
+              data-lng={shop['経度']}
+              data-navigation-control="off"
+            ></div>
+
+            <p><a className="small" href={`http://maps.apple.com/?q=${shop['緯度']},${shop['経度']}`}>スポットまでの道順</a></p>
+
+            <div className="action-buttons">
+              {shop['TEL'] && (
+                <a href={`tel:${shop['TEL']}`} className="action-button phone-button">
+                  電話で予約する
+                </a>
+              )}
+              {shop['公式サイト'] && (
+                <a href={shop['公式サイト']} target="_blank" rel="noopener noreferrer" className="action-button web-button">
+                  ネットで予約する
+                </a>
+              )}
+            </div>
+          </>
+          :
+          <></>
+        }
+      </div>
+    </div>
+  );
+};
+
+export default Content;
+</document_content>
+</document>
+<document index="31">
+<source>src\App\ShopListItem.tsx</source>
+<document_content>
+import { BsChevronCompactRight } from 'react-icons/bs'
+import './ShopListItem.scss'
+import { Link } from "react-router-dom";
+import { makeDistanceLabelText } from "./distance-label";
+
+type Props = {
+  data: Pwamap.ShopData;
+  popupHandler: Function;
+  queryCategory: string | null;
+};
+
+const Content = (props: Props) => {
+  const clickHandler = () => {
+    props.popupHandler(props.data)
+  }
+
+  const distanceTipText = makeDistanceLabelText(props.data.distance)
+  const category = props.data['カテゴリ']
+  const image = props.data['画像']
+
+  const isCategoryPage = props.queryCategory ? true :false
+
+  return (
+    <>
+      <div className="shop-link">
+        <h2 className="shop-title" style={{ wordBreak: "break-all" }} onClick={clickHandler}>{props.data['スポット名']}</h2>
+        <div className='tag-box'>
+          {
+            !isCategoryPage &&
+            <span className="nowrap">
+              <Link to={`/list?category=${category}`}>
+                <span className="category">{category}</span>
+              </Link>
+            </span>
+          }
+          <span className="nowrap">{distanceTipText && <span className="distance">現在位置から {distanceTipText}</span>}</span>
+        </div>
+
+        <div style={{ margin: "10px 10px 10px 0" }}>
+
+          { image && <img src={image} alt={props.data['スポット名']} onClick={clickHandler}/>}
+
+        </div>
+
+        <div className="right" onClick={clickHandler}><BsChevronCompactRight size="40px" color="#CCCCCC" /></div>
+      </div>
+    </>
+  );
+};
+
+export default Content;
+
+</document_content>
+</document>
+<document index="32">
+<source>src\App\Tabbar.tsx</source>
+<document_content>
+import React from "react";
+import { Link } from "react-router-dom";
+import './Tabbar.scss'
+
+import { FaList, FaHome, FaSearch, FaCamera } from "react-icons/fa"
+import { AiOutlineAppstore } from "react-icons/ai"
+
+const Content = () => {
+  return (
+    <div className="tabbar">
+      <ul>
+        <li><Link to="/"><div className="icon"><FaHome /></div><div className="text">ホーム</div></Link></li>
+        <li><Link to="/list"><div className="icon"><FaList /></div><div className="text">一覧</div></Link></li>
+        <li><Link to="/category"><div className="icon"><FaSearch /></div><div className="text">カテゴリ</div></Link></li>
+        <li><Link to="/images"><div className="icon"><FaCamera /></div><div className="text">写真から探す</div></Link></li>
+        <li><Link to="/about"><div className="icon"><AiOutlineAppstore /></div><div className="text">マップについて</div></Link></li>
+      </ul>
+    </div>
+  );
+};
+
+export default Content;
+
+</document_content>
+</document>
+<document index="33">
+<source>src\App\toGeoJson.ts</source>
+<document_content>
+type Geometry = {
+  type: string;
+  coordinates: number[]
+}
+
+type featureProperties = {
+  [key: string]: string;
+}
+
+type Feature = {
+  type: string;
+  geometry: Geometry;
+  properties: featureProperties
+}
+
+type itemObject = {
+  [key: string]: any;
+}
+
+type GeoJSON = {
+  type: string;
+  features: Feature[]
+}
+
+const toGeoJson = (data: any) => {
+  const geojson = {
+    type: "FeatureCollection",
+    features: []
+  } as GeoJSON
+
+  for (const id in data) {
+    const item = data[id] as itemObject
+
+    if (!item['経度'] || !item['緯度'] || !item['スポット名']) {
+      return;
+    }
+
+    const feature = {
+      type: "Feature",
+      geometry: {
+        type: "Point",
+        coordinates: [Number(item['経度']), Number(item['緯度'])]
+      },
+      properties: {_id: id}
+    } as Feature
+
+    for (let i = 0; i < Object.keys(item).length; i++) {
+      const key = Object.keys(item)[i]
+      feature.properties[key] = item[key]
+    }
+
+    geojson.features.push(feature)
+  }
+
+  return geojson
+}
+
+export default toGeoJson;
+
+</document_content>
+</document>
+<document index="34">
+<source>src\lib\table2json.ts</source>
+<document_content>
+import zen2han from "./zen2han";
+
+const table2json = (table: Array<Array<string>>) => {
+  const header = table[0]
+  const records = table.slice(1)
+
+  return records.map((record: Array<string>) => {
+
+    const properties = header.reduce((prev: any, column: any) => {
+      const value = record[header.indexOf(column)];
+      prev[column] = zen2han(value || '');
+      return prev;
+    }, {});
+    return properties;
+  });
+
+}
+
+export default table2json;
+
+</document_content>
+</document>
+<document index="35">
+<source>src\lib\zen2han.ts</source>
+<document_content>
+const zen2han = (str: string) => {
+  return str.replace(/[！-～]/g, function (s: string) {
+    return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+  }).replace(/　/g, ' ');
+}
+
+export default zen2han;
+
+</document_content>
+</document>
+</documents>
