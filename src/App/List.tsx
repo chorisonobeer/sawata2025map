@@ -1,11 +1,16 @@
+/* 
+Full Path: /src/App/List.tsx
+Last Modified: 2025-02-28 15:45:00
+*/
+
 import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import ShopListItem from './ShopListItem'
-import Shop from './Shop'
-import './List.scss'
+import ShopListItem from './ShopListItem';
+import Shop from './Shop';
+import './List.scss';
 import { useSearchParams } from "react-router-dom";
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { askGeolocationPermission } from '../geolocation'
-import * as turf from "@turf/turf"
+import { askGeolocationPermission } from '../geolocation';
+import * as turf from "@turf/turf";
 
 // スケルトンローディングコンポーネント
 const SkeletonItem = React.memo(() => (
@@ -20,7 +25,7 @@ const SkeletonItem = React.memo(() => (
 
 type Props = {
   data: Pwamap.ShopData[];
-}
+};
 
 // 距離計算を行う非同期関数
 const calculateDistances = async (shopList: Pwamap.ShopData[], signal: AbortSignal) => {
@@ -28,61 +33,53 @@ const calculateDistances = async (shopList: Pwamap.ShopData[], signal: AbortSign
     if (signal.aborted) return shopList;
     
     const currentPosition = await askGeolocationPermission();
-    if (!currentPosition || signal.aborted) return shopList;
+    // もし現在位置が取得できなかった場合は、すべての店舗に distance: Infinity を設定
+    if (!currentPosition || signal.aborted) {
+      return shopList.map(shop => ({ ...shop, distance: Infinity }));
+    }
     
     const from = turf.point(currentPosition);
     return shopList.map((shop) => {
-      const lng = parseFloat(shop['経度'])
-      const lat = parseFloat(shop['緯度'])
-      if(Number.isNaN(lng) || Number.isNaN(lat)) {
-        return shop
+      const lng = parseFloat(shop['経度']);
+      const lat = parseFloat(shop['緯度']);
+      if (Number.isNaN(lng) || Number.isNaN(lat)) {
+        return { ...shop, distance: Infinity };
       } else {
-        const to = turf.point([lng, lat])
-        const distance = turf.distance(from, to, {units: 'meters' as 'meters'});
-        return { ...shop, distance }
+        const to = turf.point([lng, lat]);
+        const distance = turf.distance(from, to, { units: 'meters' as 'meters' });
+        return { ...shop, distance };
       }
-    }).sort((a,b) => {
-      if(typeof a.distance !== 'number' || Number.isNaN(a.distance)) {
-        return 1
-      } else if (typeof b.distance !== 'number' || Number.isNaN(b.distance)) {
-        return -1
-      } else {
-        return a.distance - b.distance
-      }
+    }).sort((a, b) => {
+      // 未計算・不正な距離は Infinity として扱い、すべての店舗がリストに残るようにする
+      const aDistance = (typeof a.distance === 'number' && !Number.isNaN(a.distance)) ? a.distance : Infinity;
+      const bDistance = (typeof b.distance === 'number' && !Number.isNaN(b.distance)) ? b.distance : Infinity;
+      return aDistance - bDistance;
     });
   } catch (error) {
     console.warn('位置情報取得エラー:', error);
-    return shopList;
+    return shopList.map(shop => ({ ...shop, distance: Infinity }));
   }
-}
+};
 
 const Content = (props: Props) => {
   const [shop, setShop] = useState<Pwamap.ShopData | undefined>(undefined);
   const [filteredData, setFilteredData] = useState<Pwamap.ShopData[]>([]);
   const [list, setList] = useState<Pwamap.ShopData[]>([]);
-  const [page, setPage] = useState(20); // 初期表示を20件に増加
+  const [page, setPage] = useState(20); // 初期表示件数
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isDistanceCalculated, setIsDistanceCalculated] = useState(false);
 
   // マウント状態を追跡
   const isMountedRef = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  const [searchParams] = useSearchParams();
-  const queryCategory = searchParams.get('category');
-
-  // コンポーネントのアンマウント時にクリーンアップ
   useEffect(() => {
     return () => {
       isMountedRef.current = false;
-      
-      // 実行中の非同期処理をキャンセル
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
     };
   }, []);
+
+  const [searchParams] = useSearchParams();
+  const queryCategory = searchParams.get('category');
 
   // カテゴリでデータをフィルタリング（メモ化）
   const filteredByCategory = useMemo(() => {
@@ -90,28 +87,20 @@ const Content = (props: Props) => {
     return props.data.filter((shop) => shop['カテゴリ'] === queryCategory);
   }, [props.data, queryCategory]);
 
-  // 初期データ設定
+  // 初期データ設定（全件表示を目指す）
   useEffect(() => {
-    // 初期表示のためのデータをすぐに設定
     setFilteredData(filteredByCategory);
     setList(filteredByCategory.slice(0, page));
     setHasMore(filteredByCategory.length > page);
-    
-    // 位置情報取得と距離計算を非同期で開始（UIをブロックしない）
-    const orderBy = process.env.REACT_APP_ORDERBY;
-    if (orderBy === 'distance' && !isDistanceCalculated) {
+  }, [filteredByCategory, page]);
+
+  // 距離計算の実行：props.data の初回読み込み時に一度だけ実行
+  useEffect(() => {
+    if (props.data.length > 0 && !isDistanceCalculated) {
       setIsLoading(true);
-      
-      // 前回の非同期処理があればキャンセル
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      
-      // 新しい AbortController を作成
-      abortControllerRef.current = new AbortController();
-      const { signal } = abortControllerRef.current;
-      
-      calculateDistances(filteredByCategory, signal)
+      const controller = new AbortController();
+      const { signal } = controller;
+      calculateDistances(props.data, signal)
         .then(sortedData => {
           if (isMountedRef.current && !signal.aborted) {
             setFilteredData(sortedData);
@@ -126,15 +115,11 @@ const Content = (props: Props) => {
             setIsLoading(false);
           }
         });
+      return () => {
+        controller.abort();
+      };
     }
-    
-    // クリーンアップ関数
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [filteredByCategory, page, isDistanceCalculated]);
+  }, [props.data, isDistanceCalculated, page]);
 
   // ポップアップ表示ハンドラ
   const popupHandler = useCallback((shop: Pwamap.ShopData) => {
@@ -150,18 +135,17 @@ const Content = (props: Props) => {
     }
   }, []);
 
-  // 追加データ読み込みハンドラ（メモ化して最適化）
+  // 追加データ読み込みハンドラ
   const loadMore = useCallback(() => {
     if (!isMountedRef.current || list.length >= filteredData.length) {
       setHasMore(false);
       return;
     }
-    
     const nextItems = filteredData.slice(list.length, list.length + 20);
     setList(prev => [...prev, ...nextItems]);
   }, [list.length, filteredData]);
 
-  // スケルトンローダー（リスト項目がロード中の場合に表示）
+  // スケルトンローダー
   const skeletonLoader = (
     <div className="skeleton-container">
       {Array(3).fill(0).map((_, index) => (
