@@ -68,7 +68,7 @@ const Content = (props: Props) => {
   const [shop, setShop] = useState<Pwamap.ShopData | undefined>(undefined);
   const [filteredData, setFilteredData] = useState<Pwamap.ShopData[]>([]);
   const [list, setList] = useState<Pwamap.ShopData[]>([]);
-  const [page, setPage] = useState(20); // 初期表示件数
+  const [page] = useState(20); // 初期表示件数
   const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isDistanceCalculated, setIsDistanceCalculated] = useState(false);
