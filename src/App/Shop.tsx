@@ -1,6 +1,6 @@
 /* 
 Full Path: /src/App/Shop.tsx
-Last Modified: 2025-02-28 16:25:00
+Last Modified: 2025-02-28 16:35:00
 */
 
 import React, { useEffect, useRef } from "react";
@@ -15,13 +15,16 @@ type Props = {
   close: () => void;
 };
 
-// スワイプ判定用の閾値(px)
 const SWIPE_THRESHOLD = 80;
 
 const Shop: React.FC<Props> = (props) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // アニメーション用: マウント時に .slide-in クラスを付与して右側からスライドイン
+  // タッチイベント用の座標
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  // マウント時に .slide-in クラスを付与して右側からスライドイン
   useEffect(() => {
     if (containerRef.current) {
       setTimeout(() => {
@@ -30,12 +33,31 @@ const Shop: React.FC<Props> = (props) => {
     }
   }, []);
 
-  // 閉じるボタン
+  // タッチ開始イベント
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = null;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  // タッチ終了イベント
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    handleSwipeGesture();
+  };
+
+  // スワイプ判定
+  const handleSwipeGesture = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const deltaX = touchStartX.current - touchEndX.current;
+    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      window.history.back();
+    }
+  };
+
   const handleClose = () => {
     props.close();
   };
 
-  // 距離表示
   const distanceTipText =
     props.shop.distance !== undefined
       ? makeDistanceLabelText(props.shop.distance)
@@ -46,39 +68,11 @@ const Shop: React.FC<Props> = (props) => {
   const imageUrl = props.shop["画像"];
   const spotName = props.shop["スポット名"] || "店名不明";
 
-  // Shop情報
   const hours = props.shop["営業時間"] || "営業時間不明";
   const closed = props.shop["定休日"] || "定休日不明";
   const address = props.shop["住所"] || "住所不明";
   const tel = props.shop["TEL"];
   const site = props.shop["公式サイト"];
-
-  // --- スワイプ機能追加: タッチイベントの座標を管理 ---
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-
-  // タッチ開始
-  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    touchEndX.current = null;
-    touchStartX.current = e.touches[0].clientX;
-  };
-
-  // タッチ終了
-  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    touchEndX.current = e.changedTouches[0].clientX;
-    handleSwipeGesture();
-  };
-
-  // スワイプ判定
-  const handleSwipeGesture = () => {
-    if (touchStartX.current === null || touchEndX.current === null) return;
-    const deltaX = touchStartX.current - touchEndX.current;
-
-    // 左右いずれかに一定以上スワイプしたら前画面に戻る
-    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-      window.history.back();
-    }
-  };
 
   return (
     <div
@@ -86,6 +80,7 @@ const Shop: React.FC<Props> = (props) => {
       ref={containerRef}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
+      style={{ touchAction: 'pan-y' }}  /* 追加: 水平タッチをカスタム処理させる */
     >
       <div className="head">
         <button onClick={handleClose}>
@@ -128,12 +123,10 @@ const Shop: React.FC<Props> = (props) => {
           </div>
         )}
 
-        {/* 紹介文 */}
         {content && (
           <p style={{ margin: "24px 0", wordBreak: "break-all" }}>{content}</p>
         )}
 
-        {/* アクションボタン（電話 / ネット予約） */}
         <div className="action-buttons">
           {tel && (
             <a href={`tel:${tel}`} className="action-button phone-button">
