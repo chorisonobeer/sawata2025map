@@ -2,7 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import './Tabbar.scss'
 
-import { FaList, FaHome, FaSearch, FaCamera } from "react-icons/fa"
+import { FaList, FaHome, FaCamera } from "react-icons/fa"
 import { AiOutlineAppstore } from "react-icons/ai"
 
 const Content = () => {
@@ -17,7 +17,6 @@ const Content = () => {
     </div>
   );
 
-//  <li><Link to="/category"><div className="icon"><FaSearch /></div><div className="text">カテゴリ</div></Link></li>
 };
 
 export default Content;
