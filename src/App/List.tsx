@@ -27,6 +27,9 @@ type Props = {
   data: Pwamap.ShopData[];
 };
 
+// スワイプ判定用の閾値(px)
+const SWIPE_THRESHOLD = 80;
+
 // 距離計算を行う非同期関数
 const calculateDistances = async (shopList: Pwamap.ShopData[], signal: AbortSignal) => {
   try {
@@ -145,6 +148,33 @@ const Content = (props: Props) => {
     setList(prev => [...prev, ...nextItems]);
   }, [list.length, filteredData]);
 
+  // --- スワイプ機能追加: タッチイベントの座標を管理 ---
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  // タッチ開始
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = null;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  // タッチ終了
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    handleSwipeGesture();
+  };
+
+  // スワイプ判定
+  const handleSwipeGesture = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const deltaX = touchStartX.current - touchEndX.current;
+
+    // 左右どちらへ一定以上スワイプしたら戻る
+    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      window.history.back();
+    }
+  };
+
   // スケルトンローダー
   const skeletonLoader = (
     <div className="skeleton-container">
@@ -155,7 +185,12 @@ const Content = (props: Props) => {
   );
 
   return (
-    <div id="shop-list" className="shop-list">
+    <div
+      id="shop-list"
+      className="shop-list"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       {queryCategory && <div className="shop-list-category">{`カテゴリ：「${queryCategory}」`}</div>}
 
       <InfiniteScroll

@@ -15,6 +15,9 @@ type Props = {
   close: () => void;
 };
 
+// スワイプ判定用の閾値(px)
+const SWIPE_THRESHOLD = 80;
+
 const Shop: React.FC<Props> = (props) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -50,8 +53,40 @@ const Shop: React.FC<Props> = (props) => {
   const tel = props.shop["TEL"];
   const site = props.shop["公式サイト"];
 
+  // --- スワイプ機能追加: タッチイベントの座標を管理 ---
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  // タッチ開始
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = null;
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  // タッチ終了
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    handleSwipeGesture();
+  };
+
+  // スワイプ判定
+  const handleSwipeGesture = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const deltaX = touchStartX.current - touchEndX.current;
+
+    // 左右いずれかに一定以上スワイプしたら前画面に戻る
+    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      window.history.back();
+    }
+  };
+
   return (
-    <div className="shop-single" ref={containerRef}>
+    <div
+      className="shop-single"
+      ref={containerRef}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <div className="head">
         <button onClick={handleClose}>
           <AiOutlineClose size="16px" color="#FFFFFF" /> 閉じる
@@ -94,7 +129,9 @@ const Shop: React.FC<Props> = (props) => {
         )}
 
         {/* 紹介文 */}
-        {content && <p style={{ margin: "24px 0", wordBreak: "break-all" }}>{content}</p>}
+        {content && (
+          <p style={{ margin: "24px 0", wordBreak: "break-all" }}>{content}</p>
+        )}
 
         {/* アクションボタン（電話 / ネット予約） */}
         <div className="action-buttons">
