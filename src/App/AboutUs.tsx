@@ -9,15 +9,14 @@ const Content = () => {
     }
   }
 
-
+//  <div className="image"><img src={`${process.env.PUBLIC_URL}/icon-pwamap.svg`} alt=""/></div>
+//          <div className="logo">Geolonia PWAマップ</div>
   return (
     <div className="about-us">
       <div className="container">
         <div className="branding">
-          <div className="image"><img src={`${process.env.PUBLIC_URL}/icon-pwamap.svg`} alt=""/></div>
-          <div className="logo">Geolonia PWAマップ</div>
         </div>
-
+        <div className="v15_3"></div>
         <p>Geolonia PWAマップは、Google スプレッドシートを更新するだけでオリジナルの地図アプリを作成することができます。</p>
         <p>プログラムはオープンソースで公開しているため、自由にカスタマイズしてご利用いただけます。</p>
 
