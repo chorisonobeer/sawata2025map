@@ -262,7 +262,7 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
                   <div className="result-image">
                     {shop['画像'] ? (
                       <img
-                        src={shop['画像']}
+                        src={shop['画像'].startsWith('http') ? shop['画像'] : `/${shop['画像']}`}
                         alt={shop['スポット名']}
                         style={{ width: 'auto', height: '100%', margin: 0, display: 'block' }}
                       />
@@ -272,11 +272,6 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
                   </div>
                 </div>
               ))}
-              {results.length > 10 && (
-                <div className="more-results">
-                  他 {results.length - 10} 件の結果があります
-                </div>
-              )}
             </div>
           )}
         </div>
