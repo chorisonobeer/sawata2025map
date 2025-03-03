@@ -1,8 +1,3 @@
-/* 
-Full Path: /src/App/Shop.tsx
-Last Modified: 2025-02-28 17:55:00
-*/
-
 import React, { useEffect, useRef, useState, useContext } from "react";
 import Links from "./Links";
 import "./Shop.scss";
@@ -83,7 +78,6 @@ const Shop: React.FC<Props> = (props) => {
 
   const category = props.shop["カテゴリ"] || "";
   const content = props.shop["紹介文"] || "";
-  const imageUrl = props.shop["画像"];
   const spotName = props.shop["スポット名"] || "店名不明";
 
   const hours = props.shop["営業時間"] || "営業時間不明";
@@ -91,6 +85,24 @@ const Shop: React.FC<Props> = (props) => {
   const address = props.shop["住所"] || "住所不明";
   const tel = props.shop["TEL"];
   const site = props.shop["公式サイト"];
+
+  // 画像データの処理
+  const getImages = () => {
+    const imageKeys = ['画像', '画像2', '画像3', '画像4', '画像5'];
+    return imageKeys
+      .map(key => props.shop[key])
+      .filter(img => img && img.trim() !== '')
+      .map(img => {
+        // 既にURLの場合はそのまま使用、ファイル名のみの場合はpublicフォルダからのパスとして扱う
+        if (img.startsWith('http')) {
+          return img;
+        } else {
+          return `/${img}`; // publicフォルダからの相対パス
+        }
+      });
+  };
+
+  const images = getImages();
 
   return (
     <div
@@ -134,9 +146,13 @@ const Shop: React.FC<Props> = (props) => {
           </div>
         </div>
 
-        {imageUrl && (
-          <div className="shop-images">
-            <img src={imageUrl} alt={spotName} className="shop-image" />
+        {images.length > 0 && (
+          <div className="shop-images-grid">
+            {images.map((imgUrl, index) => (
+              <div key={`image-${index}`} className="shop-image-item">
+                <img src={imgUrl} alt={`${spotName} 画像${index + 1}`} className="shop-image" />
+              </div>
+            ))}
           </div>
         )}
 

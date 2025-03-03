@@ -163,4 +163,90 @@ Last Modified: 2025-02-28 16:50:00
       }
     }
   }
+
+  .shop-images-container {
+    margin: 20px 0;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  .shop-images-scroll {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 10px;
+    padding-bottom: 8px; /* スクロールバー用の余白 */
+  }
+  
+  .shop-image-wrapper {
+    flex: 0 0 auto;
+    width: 85%;
+    scroll-snap-align: center;
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    
+    &:first-child {
+      margin-left: 0;
+    }
+  }
+  
+  .shop-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  
+  /* スクロールバーのスタイル */
+  .shop-images-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+  
+  .shop-images-scroll::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 2px;
+  }
+  
+  .shop-images-scroll::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 2px;
+  }
+  
+  .shop-images-scroll::-webkit-scrollbar-thumb:hover {
+    background: #555;
+  }
+  .shop-images-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin: 20px 0;
+  }
+  
+  .shop-image-item {
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  
+  .shop-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+  }
+  
+  /* 画像が1枚だけの場合は幅いっぱいに表示 */
+  .shop-images-grid:has(.shop-image-item:only-child) {
+    grid-template-columns: 1fr;
+  }
+  
+  /* モバイル向けのスタイル調整 */
+  @media (max-width: 480px) {
+    .shop-images-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 }

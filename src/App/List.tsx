@@ -1,16 +1,12 @@
-/* 
-Full Path: /src/App/List.tsx
-Last Modified: 2025-02-28 15:45:00
-*/
-
 import React, { useState, useEffect, useMemo } from "react";
 import ShopListItem from './ShopListItem';
 import Shop from './Shop';
 import './List.scss';
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { askGeolocationPermission } from '../geolocation';
 import * as turf from "@turf/turf";
+import { useSwipeable } from "react-swipeable";
 
 // スケルトンローディングコンポーネント
 const SkeletonItem = React.memo(() => (
@@ -66,6 +62,7 @@ const Content = (props: Props) => {
   const [list, setList] = useState<Pwamap.ShopData[]>([]);
   const [page, setPage] = useState(10);
   const [hasMore, setHasMore] = useState(true);
+  const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
   const queryCategory = searchParams.get('category');
@@ -126,6 +123,18 @@ const Content = (props: Props) => {
     setPage(page + 10);
   };
 
+  // スワイプハンドラーの設定
+  const swipeHandlers = useSwipeable({
+    onSwiped: (eventData) => {
+      // X方向のスワイプのみを検出し、前の画面に戻る
+      if (Math.abs(eventData.deltaX) > Math.abs(eventData.deltaY) && Math.abs(eventData.deltaX) > 50) {
+        navigate(-1);
+      }
+    },
+    trackMouse: false,
+    preventScrollOnSwipe: false,
+  });
+
   // skeletonLoader を定義して、InfiniteScroll の loader として利用する
   const skeletonLoader = useMemo(() => (
     <div className="skeleton-container">
@@ -136,7 +145,7 @@ const Content = (props: Props) => {
   ), []);
 
   return (
-    <div id="shop-list" className="shop-list">
+    <div id="shop-list" className="shop-list" {...swipeHandlers}>
       {queryCategory && <div className="shop-list-category">{`カテゴリ：「${queryCategory}」`}</div>}
 
       <InfiniteScroll
