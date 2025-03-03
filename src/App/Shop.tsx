@@ -1,6 +1,6 @@
 /* 
 Full Path: /src/App/Shop.tsx
-Last Modified: 2025-02-28 16:35:00
+Last Modified: 2025-02-28 17:30:00
 */
 
 import React, { useEffect, useRef } from "react";
@@ -20,11 +20,7 @@ const SWIPE_THRESHOLD = 80;
 const Shop: React.FC<Props> = (props) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // タッチイベント用の座標
-  const touchStartX = useRef<number | null>(null);
-  const touchEndX = useRef<number | null>(null);
-
-  // マウント時に .slide-in クラスを付与して右側からスライドイン
+  // アニメーション用: マウント時に .slide-in クラスを付与して右側からスライドイン
   useEffect(() => {
     if (containerRef.current) {
       setTimeout(() => {
@@ -33,24 +29,26 @@ const Shop: React.FC<Props> = (props) => {
     }
   }, []);
 
-  // タッチ開始イベント
+  // タッチイベント用の座標管理
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     touchEndX.current = null;
     touchStartX.current = e.touches[0].clientX;
   };
 
-  // タッチ終了イベント
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
     touchEndX.current = e.changedTouches[0].clientX;
     handleSwipeGesture();
   };
 
-  // スワイプ判定
+  // スワイプ判定: 一定量スワイプした場合、閉じるボタンと同じ挙動（props.close()）を実行
   const handleSwipeGesture = () => {
     if (touchStartX.current === null || touchEndX.current === null) return;
     const deltaX = touchStartX.current - touchEndX.current;
     if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
-      window.history.back();
+      props.close();
     }
   };
 
@@ -80,7 +78,6 @@ const Shop: React.FC<Props> = (props) => {
       ref={containerRef}
       onTouchStart={onTouchStart}
       onTouchEnd={onTouchEnd}
-      style={{ touchAction: 'pan-y' }}  /* 追加: 水平タッチをカスタム処理させる */
     >
       <div className="head">
         <button onClick={handleClose}>
