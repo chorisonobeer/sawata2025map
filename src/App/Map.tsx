@@ -205,7 +205,7 @@ const Content = (props: Props) => {
     
     const map = new geolonia.Map({
       container: mapNode.current,
-      style: 'geolonia/gsi',
+      style: 'geolonia/basic',
       // Geolonia属性を直接JS設定に反映
       attributionControl: false,
       gestureHandling: true,
