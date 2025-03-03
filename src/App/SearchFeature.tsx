@@ -1,9 +1,4 @@
-/* 
-Full Path: /src/App/SearchFeature.tsx
-Last Modified: 2025-02-28 14:45:00
-*/
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SearchFeature.scss';
 
 type SearchFeatureProps = {
@@ -20,6 +15,22 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
   const [categories, setCategories] = useState<string[]>([]);
   const [results, setResults] = useState<Pwamap.ShopData[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // クリック外のイベントを監視して、ドロップダウンを閉じる
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // カテゴリ一覧を作成
   useEffect(() => {
@@ -32,6 +43,7 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
   // フィルタリング処理
   const filterShops = useCallback(() => {
     let filtered = data;
+    console.debug(`フィルタリング開始：全店舗数 ${filtered.length}`);
 
     // テキスト検索
     if (query.trim() !== '') {
@@ -43,18 +55,26 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
           return false;
         });
       });
+      console.debug(`テキスト検索後： ${filtered.length} 件`);
     }
 
     // カテゴリでフィルタリング
     if (selectedCategory) {
       filtered = filtered.filter(shop => shop['カテゴリ'] === selectedCategory);
+      console.debug(`カテゴリフィルタ後： ${filtered.length} 件`);
     }
 
     // 営業中でフィルタリング
     if (isOpenNow) {
+      // 現在時刻をJST（UTC+9）に補正して取得
       const now = new Date();
-      const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
-      const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const jstNow = new Date(utc + 9 * 60 * 60000);
+      const currentHour = jstNow.getHours();
+      const currentMinute = jstNow.getMinutes();
+      const currentTimeMinutes = currentHour * 60 + currentMinute;
+      console.debug(`現在のJST時刻: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
+      const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][jstNow.getDay()];
 
       filtered = filtered.filter(shop => {
         // 定休日チェック：カンマ、全角カンマ、空白で分割してチェック
@@ -64,34 +84,52 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
             .map(day => day.trim())
             .filter(day => day !== '');
           if (closedDays.some(day => day.includes(dayOfWeek))) {
+            console.debug(`店舗[${shop['スポット名']}]：定休日(${dayOfWeek})のため除外`);
             return false;
           }
         }
 
-        // 営業時間チェック（10:00 - 17:00, 10時～17時などに対応）
+        // 営業時間チェック（例: "10:00 - 17:00" の形式）
         if (shop['営業時間']) {
-          const timeRangeMatch = shop['営業時間'].match(/(\d{1,2})(?::(\d{2}))?\s*[：:時～-]\s*(\d{1,2})(?::(\d{2}))?/);
+          const timeRangeMatch = shop['営業時間'].match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
           if (timeRangeMatch) {
-            const startHour = parseInt(timeRangeMatch[1], 10);
-            const startMinute = timeRangeMatch[2] ? parseInt(timeRangeMatch[2], 10) : 0;
-            const endHour = parseInt(timeRangeMatch[3], 10);
-            const endMinute = timeRangeMatch[4] ? parseInt(timeRangeMatch[4], 10) : 0;
+            const [, startHourStr, startMinuteStr, endHourStr, endMinuteStr] = timeRangeMatch;
+            const startHour = parseInt(startHourStr, 10);
+            const startMinute = parseInt(startMinuteStr, 10);
+            const endHour = parseInt(endHourStr, 10);
+            const endMinute = parseInt(endMinuteStr, 10);
             const startTimeMinutes = startHour * 60 + startMinute;
             const endTimeMinutes = endHour * 60 + endMinute;
-            // 対応：深夜営業の場合（例：22:00-02:00）
+            
+            console.debug(`店舗[${shop['スポット名']}] 営業時間: ${startHour}:${startMinute.toString().padStart(2, '0')} ～ ${endHour}:${endMinute.toString().padStart(2, '0')}、現在: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
+
+            // 深夜営業対応（例: 22:00 - 02:00）
             if (endTimeMinutes < startTimeMinutes) {
-              return currentTimeMinutes >= startTimeMinutes || currentTimeMinutes <= endTimeMinutes;
+              // 終了時間が開始時間より前の場合（深夜営業）
+              const isOpen = currentTimeMinutes >= startTimeMinutes || currentTimeMinutes <= endTimeMinutes;
+              console.debug(`店舗[${shop['スポット名']}]: 深夜営業判定 = ${isOpen ? '営業中' : '営業時間外'}`);
+              return isOpen;
             } else {
-              return currentTimeMinutes >= startTimeMinutes && currentTimeMinutes <= endTimeMinutes;
+              // 通常の営業時間
+              const isOpen = currentTimeMinutes >= startTimeMinutes && currentTimeMinutes <= endTimeMinutes;
+              console.debug(`店舗[${shop['スポット名']}]: 通常営業判定 = ${isOpen ? '営業中' : '営業時間外'}`);
+              return isOpen;
             }
+          } else {
+            console.warn(`店舗[${shop['スポット名']}]：営業時間の形式が不明 (${shop['営業時間']})`);
+            // フォーマット不明な場合は営業中でないと判断
+            return false;
           }
         }
-        // 営業時間の形式が不明な場合はデフォルトで表示
-        return true;
+        
+        // 営業時間情報がない場合は営業中でないと判断
+        console.debug(`店舗[${shop['スポット名']}]：営業時間情報なし`);
+        return false;
       });
+      console.debug(`営業時間フィルタ後： ${filtered.length} 件`);
     }
 
-    // 駐車場でフィルタリング：1台以上あるものにする
+    // 駐車場フィルタリング：1台以上あるもの
     if (hasParking) {
       filtered = filtered.filter(shop => {
         if (!shop['駐車場']) return false;
@@ -103,8 +141,10 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
         }
         return parkingStr.includes('有') || parkingStr.includes('あり');
       });
+      console.debug(`駐車場フィルタ後： ${filtered.length} 件`);
     }
 
+    console.debug(`最終フィルタ結果： ${filtered.length} 件`);
     setResults(filtered);
     onSearchResults(filtered);
   }, [data, query, selectedCategory, isOpenNow, hasParking, onSearchResults]);
@@ -121,8 +161,9 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
   };
 
   // カテゴリ選択ハンドラー
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCategory(e.target.value);
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setShowCategoryDropdown(false);
   };
 
   // 結果アイテムクリックハンドラー
@@ -142,22 +183,37 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
           className="search-input"
         />
       </div>
-      
+
       <div className="filter-container">
-        <div className="filter-item">
-          <select
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            className={`filter-select ${selectedCategory ? 'active' : ''}`}
+        {/* カスタムドロップダウン */}
+        <div className="filter-item category-filter" ref={dropdownRef}>
+          <div 
+            className={`custom-dropdown-header ${selectedCategory ? 'active' : ''}`}
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
           >
-            <option value="">カテゴリ</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+            {selectedCategory || 'カテゴリ'}
+          </div>
+          {showCategoryDropdown && (
+            <div className="custom-dropdown-list">
+              <div 
+                className="custom-dropdown-item"
+                onClick={() => handleCategorySelect('')}
+              >
+                すべて
+              </div>
+              {categories.map((category) => (
+                <div
+                  key={category}
+                  className="custom-dropdown-item"
+                  onClick={() => handleCategorySelect(category)}
+                >
+                  {category}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+        
         <div className="filter-item">
           <button
             className={`filter-button ${isOpenNow ? 'active' : ''}`}
@@ -166,6 +222,7 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
             現在営業中
           </button>
         </div>
+        
         <div className="filter-item">
           <button
             className={`filter-button ${hasParking ? 'active' : ''}`}
@@ -215,6 +272,11 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
                   </div>
                 </div>
               ))}
+              {results.length > 10 && (
+                <div className="more-results">
+                  他 {results.length - 10} 件の結果があります
+                </div>
+              )}
             </div>
           )}
         </div>

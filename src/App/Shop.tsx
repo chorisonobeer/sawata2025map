@@ -1,14 +1,16 @@
 /* 
 Full Path: /src/App/Shop.tsx
-Last Modified: 2025-02-28 17:30:00
+Last Modified: 2025-02-28 17:55:00
 */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState, useContext } from "react";
 import Links from "./Links";
 import "./Shop.scss";
 import { AiOutlineClose } from "react-icons/ai";
 import { Link } from "react-router-dom";
 import { makeDistanceLabelText } from "./distance-label";
+import { GeolocationContext } from "../context/GeolocationContext";
+import * as turf from "@turf/turf";
 
 type Props = {
   shop: Pwamap.ShopData;
@@ -19,6 +21,8 @@ const SWIPE_THRESHOLD = 80;
 
 const Shop: React.FC<Props> = (props) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [localDistance, setLocalDistance] = useState<number | undefined>(props.shop.distance);
+  const currentPosition = useContext(GeolocationContext);
 
   // アニメーション用: マウント時に .slide-in クラスを付与して右側からスライドイン
   useEffect(() => {
@@ -28,6 +32,22 @@ const Shop: React.FC<Props> = (props) => {
       }, 10);
     }
   }, []);
+
+  // もしprops.shop.distanceが未定義なら、現在位置からの距離を計算
+  useEffect(() => {
+    if (localDistance === undefined && currentPosition) {
+      const from = turf.point(currentPosition);
+      const lng = parseFloat(props.shop["経度"]);
+      const lat = parseFloat(props.shop["緯度"]);
+      if (!Number.isNaN(lng) && !Number.isNaN(lat)) {
+        const to = turf.point([lng, lat]);
+        const distance = turf.distance(from, to, { units: 'meters' as 'meters' });
+        setLocalDistance(distance);
+      } else {
+        setLocalDistance(Infinity);
+      }
+    }
+  }, [localDistance, currentPosition, props.shop]);
 
   // タッチイベント用の座標管理
   const touchStartX = useRef<number | null>(null);
@@ -43,7 +63,7 @@ const Shop: React.FC<Props> = (props) => {
     handleSwipeGesture();
   };
 
-  // スワイプ判定: 一定量スワイプした場合、閉じるボタンと同じ挙動（props.close()）を実行
+  // スワイプ判定: 一定以上の横スワイプで閉じる（閉じるボタンと同じ動作）
   const handleSwipeGesture = () => {
     if (touchStartX.current === null || touchEndX.current === null) return;
     const deltaX = touchStartX.current - touchEndX.current;
@@ -57,8 +77,8 @@ const Shop: React.FC<Props> = (props) => {
   };
 
   const distanceTipText =
-    props.shop.distance !== undefined
-      ? makeDistanceLabelText(props.shop.distance)
+    localDistance !== undefined && localDistance !== Infinity
+      ? makeDistanceLabelText(localDistance)
       : "距離不明";
 
   const category = props.shop["カテゴリ"] || "";
