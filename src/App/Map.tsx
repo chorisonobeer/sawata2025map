@@ -40,17 +40,37 @@ const hidePoiLayers = (map: any) => {
 };
 
 // マーカーを追加する関数
-const setupMarkers = (map: any, data: Pwamap.ShopData[], onSelectShop: (shop: Pwamap.ShopData) => void) => {
+const setupMarkers = (map: any, data: Pwamap.ShopData[], onSelectShop: (shop: Pwamap.ShopData) => void, isInitialLoad: boolean = false) => {
   const textColor = '#000000';
   const textHaloColor = '#FFFFFF';
   
   const geojson = toGeoJson(data);
   
+  console.log(`マーカー更新: データ数 ${data.length}件`);
+  
   if (map.getSource('shops')) {
+    console.log('既存のマーカーを更新します');
+    
+    // 関連レイヤーを一旦削除
+    if (map.getLayer('shop-points')) map.removeLayer('shop-points');
+    if (map.getLayer('shop-symbol')) map.removeLayer('shop-symbol');
+    if (map.getLayer('clusters')) map.removeLayer('clusters');
+    if (map.getLayer('cluster-count')) map.removeLayer('cluster-count');
+    if (map.getLayer('unclustered-point')) map.removeLayer('unclustered-point');
+    
+    // ソースを更新
     map.getSource('shops').setData(geojson);
+    
+    // レイヤーを再作成
+    addLayers(map, textColor, textHaloColor, onSelectShop);
+    
+    // クラスタリングを設定
+    setCluster(map);
+    
     return;
   }
   
+  // 初回のソース作成
   map.addSource('shops', {
     type: 'geojson',
     data: geojson,
@@ -59,6 +79,25 @@ const setupMarkers = (map: any, data: Pwamap.ShopData[], onSelectShop: (shop: Pw
     clusterRadius: 25,
   });
   
+  // レイヤーを追加
+  addLayers(map, textColor, textHaloColor, onSelectShop);
+  
+  // クラスタリングを設定
+  setCluster(map);
+  
+  // 初回ロード時のみ表示範囲を調整
+  if (isInitialLoad && data.length > 0) {
+    const bounds = geojsonExtent(geojson);
+    if (bounds) {
+      map.fitBounds(bounds, {
+        padding: 50
+      });
+    }
+  }
+};
+
+// レイヤー追加の共通処理を関数化
+const addLayers = (map: any, textColor: string, textHaloColor: string, onSelectShop: (shop: Pwamap.ShopData) => void) => {
   map.addLayer({
     id: 'shop-points',
     type: 'circle',
@@ -97,6 +136,12 @@ const setupMarkers = (map: any, data: Pwamap.ShopData[], onSelectShop: (shop: Pw
     },
   });
   
+  // イベントハンドラを設定
+  setupEventHandlers(map, onSelectShop);
+};
+
+// イベントハンドラ設定の共通処理を関数化
+const setupEventHandlers = (map: any, onSelectShop: (shop: Pwamap.ShopData) => void) => {
   map.on('mouseenter', 'shop-points', () => {
     map.getCanvas().style.cursor = 'pointer';
   });
@@ -121,27 +166,24 @@ const setupMarkers = (map: any, data: Pwamap.ShopData[], onSelectShop: (shop: Pw
       onSelectShop(event.features[0].properties);
     }
   });
-  
-  setCluster(map);
-  
-  // 表示範囲を調整
-  const bounds = geojsonExtent(geojson);
-  if (bounds) {
-    map.fitBounds(bounds, {
-      padding: 50
-    });
-  }
 };
 
 const Content = (props: Props) => {
   const mapNode = React.useRef<HTMLDivElement>(null);
   const [mapObject, setMapObject] = React.useState<any>();
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
   
   // データが変更されたときにマーカーを更新
   React.useEffect(() => {
-    if (!mapObject || props.data.length === 0) return;
-    setupMarkers(mapObject, props.data, props.onSelectShop);
-  }, [mapObject, props.data, props.onSelectShop]);
+    if (!mapObject) return;
+    
+    console.log(`データ更新検知: ${props.data.length}件`);
+    setupMarkers(mapObject, props.data, props.onSelectShop, !initialLoadComplete);
+    
+    if (!initialLoadComplete) {
+      setInitialLoadComplete(true);
+    }
+  }, [mapObject, props.data, props.onSelectShop, initialLoadComplete]);
   
   // 選択された店舗が変更されたときに地図を移動
   React.useEffect(() => {
@@ -176,7 +218,8 @@ const Content = (props: Props) => {
       setMapObject(map);
       
       if (props.initialData && props.initialData.length > 0) {
-        setupMarkers(map, props.initialData, props.onSelectShop);
+        setupMarkers(map, props.initialData, props.onSelectShop, true);
+        setInitialLoadComplete(true);
       }
     });
     
@@ -198,8 +241,8 @@ const Content = (props: Props) => {
         className="geolonia custom-map-container"
         style={CSS}
         data-geolocate-control="on"
-        data-marker="off"
-        data-gesture-handling="off"
+        data-marker="on"
+        data-gesture-handling="on"
       ></div>
     </div>
   );
