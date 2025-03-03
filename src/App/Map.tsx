@@ -168,6 +168,7 @@ const Content = (props: Props) => {
   const [mapObject, setMapObject] = React.useState<any>();
   const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
   const geolocateControlRef = React.useRef<any>(null);
+  const hasTriggeredGeolocation = React.useRef<boolean>(false);
   
   // データが変更されたときにマーカーを更新
   React.useEffect(() => {
@@ -206,7 +207,8 @@ const Content = (props: Props) => {
     const map = new geolonia.Map({
       container: mapNode.current,
       style: 'geolonia/basic',
-      // Geolonia属性を直接JS設定に反映
+      center: [138.5, 37.9], // 新潟県の中心あたり
+      zoom: 7, // 県全体が見えるようなズームレベル
       attributionControl: false,
       gestureHandling: true,
       lazy: false,
@@ -215,14 +217,7 @@ const Content = (props: Props) => {
     map.on('load', () => {
       hidePoiLayers(map);
       
-/*      // スケールコントロールを追加
-      const scaleControl = new geolonia.ScaleControl({
-        maxWidth: 100,
-        unit: 'metric'
-      });
-      map.addControl(scaleControl, 'bottom-left');*/
-      
-      // ジオロケーションコントロールを追加（1つだけ）
+      // ジオロケーションコントロールを追加
       if (!geolocateControlRef.current) {
         const geolocateControl = new geolonia.GeolocateControl({
           positionOptions: {
@@ -233,16 +228,26 @@ const Content = (props: Props) => {
           trackUserLocation: true,
           showUserLocation: true
         });
+        
         geolocateControlRef.current = geolocateControl;
         map.addControl(geolocateControl, 'top-right');
         
-        // 地図の読み込み後に少し遅延して位置情報ボタンのイベントを確認
+        // 位置情報のイベントリスナーを設定
+        geolocateControl.on('geolocate', () => {
+          console.log('位置情報が取得されました');
+        });
+        
+        geolocateControl.on('error', (e: any) => {
+          console.warn('位置情報の取得に失敗しました:', e.error);
+        });
+        
+        // 地図の読み込み後に自動で位置情報を取得
         setTimeout(() => {
-          console.log('ジオロケーションコントロールを初期化しました');
-          // デバッグ情報
-          geolocateControl.on('error', (e: any) => {
-            console.warn('位置情報の取得に失敗しました:', e.error);
-          });
+          if (!hasTriggeredGeolocation.current) {
+            console.log('自動で位置情報を取得します');
+            geolocateControl.trigger();
+            hasTriggeredGeolocation.current = true;
+          }
         }, 1000);
       }
       
