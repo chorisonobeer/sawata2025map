@@ -7,7 +7,7 @@
     position: absolute;
     top: 10px;
     left: 10px;
-    width: calc(80% - 0px);
+    width: calc(81% - 0px);
     background: white;
     border: 1px solid #ddd;
     border-radius: 4px;
@@ -36,19 +36,19 @@
     position: absolute;
     top: 45px;
     left: 10px;
-    width: calc(80% - 0px);
+    width: calc(81% - 0px);
     display: flex;
-    gap: 8px; // ボタン間のギャップ - 確実に適用されるよう再定義
+    gap: 4px; // ボタン間のギャップ - 確実に適用されるよう再定義
     
     .filter-item {
       flex: 1;
       
       // カテゴリフィルターの調整 - カテゴリを適切な幅に設定
       &.category-filter {
-        flex: 1.2; // 少し広めのスペース（他のボタンの1.2倍）
-        min-width: 100px; // 最小幅を設定
-        max-width: 150px; // 最大幅を制限
-        margin-right: 18px; // 右側の余白を追加
+        flex: 1; // 少し広めのスペース（他のボタンの1.2倍）
+        min-width: 50px; // 最小幅を設定
+        max-width: 130px; // 最大幅を制限
+        margin-right: 22px; // 右側の余白を追加
         position: relative; // ドロップダウンの位置決めのため
       }
       

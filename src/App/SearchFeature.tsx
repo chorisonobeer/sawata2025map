@@ -191,7 +191,7 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
             className={`custom-dropdown-header ${selectedCategory ? 'active' : ''}`}
             onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
           >
-            {selectedCategory || 'カテゴリ'}
+            {selectedCategory === '' ? 'すべて' : selectedCategory}
           </div>
           {showCategoryDropdown && (
             <div className="custom-dropdown-list">
