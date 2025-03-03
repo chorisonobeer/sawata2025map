@@ -243,6 +243,9 @@ const Content = (props: Props) => {
         data-geolocate-control="on"
         data-marker="on"
         data-gesture-handling="on"
+        data-loader="off"
+        data-lazy-loading="on"
+        data-scale-control="bottom-left"
       ></div>
     </div>
   );
