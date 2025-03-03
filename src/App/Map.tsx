@@ -1,8 +1,3 @@
-/* 
-Full Path: /src/App/Map.tsx
-Last Modified: 2025-02-28 13:30:00
-*/
-
 import React from "react";
 // @ts-ignore
 import geojsonExtent from '@mapbox/geojson-extent';
@@ -13,7 +8,7 @@ type Props = {
   data: Pwamap.ShopData[];
   selectedShop?: Pwamap.ShopData;
   onSelectShop: (shop: Pwamap.ShopData) => void;
-  initialData?: Pwamap.ShopData[]; // 初期データを追加
+  initialData?: Pwamap.ShopData[];
 };
 
 const CSS: React.CSSProperties = {
@@ -172,6 +167,7 @@ const Content = (props: Props) => {
   const mapNode = React.useRef<HTMLDivElement>(null);
   const [mapObject, setMapObject] = React.useState<any>();
   const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+  const geolocateControlRef = React.useRef<any>(null);
   
   // データが変更されたときにマーカーを更新
   React.useEffect(() => {
@@ -210,11 +206,46 @@ const Content = (props: Props) => {
     const map = new geolonia.Map({
       container: mapNode.current,
       style: 'geolonia/gsi',
-//      attributionControl: false,
+      // Geolonia属性を直接JS設定に反映
+      attributionControl: false,
+      gestureHandling: true,
+      lazy: false,
     });
     
     map.on('load', () => {
       hidePoiLayers(map);
+      
+/*      // スケールコントロールを追加
+      const scaleControl = new geolonia.ScaleControl({
+        maxWidth: 100,
+        unit: 'metric'
+      });
+      map.addControl(scaleControl, 'bottom-left');*/
+      
+      // ジオロケーションコントロールを追加（1つだけ）
+      if (!geolocateControlRef.current) {
+        const geolocateControl = new geolonia.GeolocateControl({
+          positionOptions: {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          },
+          trackUserLocation: true,
+          showUserLocation: true
+        });
+        geolocateControlRef.current = geolocateControl;
+        map.addControl(geolocateControl, 'top-right');
+        
+        // 地図の読み込み後に少し遅延して位置情報ボタンのイベントを確認
+        setTimeout(() => {
+          console.log('ジオロケーションコントロールを初期化しました');
+          // デバッグ情報
+          geolocateControl.on('error', (e: any) => {
+            console.warn('位置情報の取得に失敗しました:', e.error);
+          });
+        }, 1000);
+      }
+      
       setMapObject(map);
       
       if (props.initialData && props.initialData.length > 0) {
@@ -240,12 +271,12 @@ const Content = (props: Props) => {
         ref={mapNode}
         className="geolonia custom-map-container"
         style={CSS}
-        data-geolocate-control="on"
-        data-marker="on"
-        data-gesture-handling="on"
+        data-geolocate-control="off"
+        data-marker="off"
+        data-gesture-handling="off"
         data-loader="off"
-        data-lazy-loading="on"
-        data-scale-control="bottom-left"
+        data-lazy-loading="off"
+        data-scale-control="on"
       ></div>
     </div>
   );
