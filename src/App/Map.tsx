@@ -1,6 +1,6 @@
 /* 
 Full Path: /src/App/Map.tsx
-Last Modified: 2025-03-19 14:00:00
+Last Modified: 2025-03-19 15:30:00
 */
 
 import React, { useRef, useCallback } from "react";
@@ -44,11 +44,12 @@ const hidePoiLayers = (map: any) => {
 };
 
 const Content = (props: Props) => {
+ const { onSelectShop } = props;
  const mapNode = React.useRef<HTMLDivElement>(null);
  const [mapObject, setMapObject] = React.useState<any>();
  const initialBoundsSet = useRef(false);
 
- // データソースを更新する関数
+ // 既存のデータソースを更新する関数
  const updateDataSource = useCallback((map: any, data: Pwamap.ShopData[]) => {
    if (!map || !map.getSource('shops') || data.length === 0) return;
    
@@ -56,8 +57,8 @@ const Content = (props: Props) => {
    map.getSource('shops').setData(geojson);
  }, []);
 
- // マーカーをマップに追加
- const addMarkers = (mapObject: any, data: any) => {
+ // マーカーをマップに追加する関数をメモ化
+ const addMarkers = useCallback((mapObject: any, data: any) => {
    if (!mapObject || data.length === 0) {
      return;
    }
@@ -139,32 +140,32 @@ const Content = (props: Props) => {
 
      mapObject.on('click', 'shop-points', (event: any) => {
        if (!event.features[0].properties.cluster) {
-         props.onSelectShop(event.features[0].properties);
+         onSelectShop(event.features[0].properties);
        }
      });
 
      mapObject.on('click', 'shop-symbol', (event: any) => {
        if (!event.features[0].properties.cluster) {
-         props.onSelectShop(event.features[0].properties);
+         onSelectShop(event.features[0].properties);
        }
      });
 
      setCluster(mapObject);
    });
- };
+ }, [onSelectShop]);
 
  // マップデータが変わったらマーカーを更新
  React.useEffect(() => {
    if (!mapObject) return;
    
    if (mapObject.getSource('shops')) {
-     // 既にデータソースが存在する場合は更新のみ
+     // 既存のデータソースが存在する場合は更新
      updateDataSource(mapObject, props.data);
    } else {
-     // 初回はマーカーを追加
+     // データソースが存在しない場合は新規作成
      addMarkers(mapObject, props.data);
    }
- }, [mapObject, props.data, updateDataSource]);
+ }, [mapObject, props.data, addMarkers, updateDataSource]);
 
  // 初回のみ、地図の表示範囲を調整
  React.useEffect(() => {
@@ -258,7 +259,7 @@ const Content = (props: Props) => {
      window.removeEventListener('orientationchange', orientationChangeHandler);
      map.off('load', onMapLoad);
    };
- }, [mapNode, mapObject, props.data]);
+ }, [mapNode, mapObject]);
 
  return (
    <div style={CSS}>
