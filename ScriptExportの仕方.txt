@@ -1,0 +1,2 @@
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\export-script.ps1

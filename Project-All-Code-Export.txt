@@ -1,4 +1,4 @@
-<documents>
+﻿<documents>
 <document index="1">
 <source>package.json</source>
 <document_content>
@@ -34,6 +34,7 @@
     "react-select": "^5.2.2",
     "react-share": "^4.4.0",
     "react-stars": "^2.2.5",
+    "react-swipeable": "^7.0.2",
     "typescript": "~4.6.2"
   },
   "scripts": {
@@ -274,21 +275,7 @@ process.exit(0);
     <meta property="og:title" content="%REACT_APP_TITLE%">
     <meta property="og:image" content="%REACT_APP_HOMEPAGE_URL%apple-splash-1136-640.jpg">
     <meta property="og:type" content="website">
-
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
-
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
     <title>%REACT_APP_TITLE%</title>
     <link rel="icon" type="image/png" sizes="196x196" href="favicon-196.png">
     <link rel="apple-touch-icon" href="apple-icon-180.png">
@@ -322,13 +309,13 @@ process.exit(0);
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root">
-      <div class="loader"><img src="./manifest-icon-512.maskable.png" alt=""><br>%REACT_APP_TITLE%</div>
-    </div>
-    <a class="github-fork-ribbon" href="https://github.com/geoloniamaps/pwamap/" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
+    <div id="root"></div>
+    <!-- 追加: Portal 用の要素 -->
+    <div id="modal-root"></div>
     <script type="text/javascript" src="https://cdn.geolonia.com/v1/embed?geolonia-api-key=YOUR-API-KEY"></script>
   </body>
 </html>
+
 </document_content>
 </document>
 <document index="6">
@@ -416,6 +403,7 @@ img
   {
     background: none !important;
   }
+
 }
 
 </document_content>
@@ -423,91 +411,81 @@ img
 <document index="8">
 <source>src\App.tsx</source>
 <document_content>
+/* 
+Full Path: /src/App.tsx
+Last Modified: 2025-02-28 17:45:00
+*/
+
 import React from "react";
 import { Routes, Route } from "react-router-dom";
 import "./App.scss";
 
-import Home from './App/Home'
-import List from './App/List'
-import AboutUs from './App/AboutUs'
-import Category from './App/Category'
-import Images from './App/Images'
+import Home from './App/Home';
+import List from './App/List';
+import AboutUs from './App/AboutUs';
+import Category from './App/Category';
+import Images from './App/Images';
 
-import Tabbar from './App/Tabbar'
+import Tabbar from './App/Tabbar';
 import config from "./config.json";
-import Papa from 'papaparse'
-
-// You can see config.json after running `npm start` or `npm run build`
-// import config from './config.json'
+import Papa from 'papaparse';
+import { GeolocationProvider } from './context/GeolocationContext';
 
 const sortShopList = async (shopList: Pwamap.ShopData[]) => {
-
   // 新着順にソート
-  return shopList.sort(function (item1, item2) {
-    return Date.parse(item2['タイムスタンプ']) - Date.parse(item1['タイムスタンプ'])
+  return shopList.sort((item1, item2) => {
+    return Date.parse(item2['タイムスタンプ']) - Date.parse(item1['タイムスタンプ']);
   });
-
 }
 
 const App = () => {
-  const [shopList, setShopList] = React.useState<Pwamap.ShopData[]>([])
+  const [shopList, setShopList] = React.useState<Pwamap.ShopData[]>([]);
 
   React.useEffect(() => {
     fetch(config.data_url)
-    .then((response) => {
-      return response.ok ? response.text() : Promise.reject(response.status);
-    })
-    .then((data) => {
-
-      Papa.parse(data, {
-        header: true,
-        complete: (results) => {
-          const features = results.data
-
-          const nextShopList: Pwamap.ShopData[] = []
-          for (let i = 0; i < features.length; i++) {
-            const feature = features[i] as Pwamap.ShopData
-            if (!feature['緯度'] || !feature['経度'] || !feature['スポット名']) {
-              continue;
+      .then((response) => {
+        return response.ok ? response.text() : Promise.reject(response.status);
+      })
+      .then((data) => {
+        Papa.parse(data, {
+          header: true,
+          complete: (results) => {
+            const features = results.data;
+            const nextShopList: Pwamap.ShopData[] = [];
+            for (let i = 0; i < features.length; i++) {
+              const feature = features[i] as Pwamap.ShopData;
+              if (!feature['緯度'] || !feature['経度'] || !feature['スポット名']) continue;
+              if (!feature['緯度'].match(/^[0-9]+(\.[0-9]+)?$/)) continue;
+              if (!feature['経度'].match(/^[0-9]+(\.[0-9]+)?$/)) continue;
+              const shop = { index: i, ...feature };
+              nextShopList.push(shop);
             }
-            if (!feature['緯度'].match(/^[0-9]+(\.[0-9]+)?$/)) {
-              continue
-            }
-            if (!feature['経度'].match(/^[0-9]+(\.[0-9]+)?$/)) {
-              continue
-            }
-            const shop = {
-              // @ts-ignore
-              index: i,
-              ...feature
-            }
-
-            nextShopList.push(shop)
+            sortShopList(nextShopList).then((sortedShopList) => {
+              setShopList(sortedShopList);
+            });
           }
-          sortShopList(nextShopList).then((sortedShopList) => {
-            setShopList(sortedShopList)
-          })
-        }
+        });
       });
-    });
-  }, [])
-
+  }, []);
 
   return (
-    <div className="app">
-      <div className="app-body">
-        <Routes>
-          <Route path="/" element={<Home data={shopList} />} />
-          <Route path="/list" element={<List data={shopList} />} />
-          <Route path="/category" element={<Category data={shopList} />} />
-          <Route path="/images" element={<Images data={shopList} />} />
-          <Route path="/about" element={<AboutUs />} />
-        </Routes>
+    <GeolocationProvider>
+      <div className="app">
+        <div className="app-body">
+          <Routes>
+            <Route path="/" element={<Home data={shopList} />} />
+            <Route path="/list" element={<List data={shopList} />} />
+            <Route path="/category" element={<Category data={shopList} />} />
+            <Route path="/images" element={<Images data={shopList} />} />
+            <Route path="/about" element={<AboutUs />} />
+          </Routes>
+        </div>
+        <div id="modal-root"></div>
+        <div className="app-footer">
+          <Tabbar />
+        </div>
       </div>
-      <div className="app-footer">
-        <Tabbar />
-      </div>
-    </div>
+    </GeolocationProvider>
   );
 }
 
@@ -523,9 +501,9 @@ export default App;
   "description": "新潟県佐渡市佐和田町料飲店組合加盟店のMAPです",
   "data_url": "https://docs.google.com/spreadsheets/d/e/2PACX-1vRvUHoy7wWdYt4WjEy3fNyD2P89GtkTzuw45ILKKsDMnxQK_MpScN_8X98LFGC7Eoeguyk0ybGVUblZ/pub?gid=1957425126&single=true&output=csv",
   "form_url": null,
-  "logo_image_url": "https://geoloniamaps.github.io/pwamap/icon-pwamap.svg",
-  "background_image_url": "https://geoloniamaps.github.io/pwamap/geolonia_bgimage_1920_1080.png",
-  "primary_color": "#d2691e",
+  "logo_image_url": "/logo.svg",
+  "background_image_url": "/back.jpg",
+  "primary_color": "#00A0E6",
   "orderby": "distance"
 }
 </document_content>
@@ -575,7 +553,7 @@ export const askGeolocationPermission = () => {
       },
       {
         enableHighAccuracy: true,
-        timeout: 5000,
+        timeout: 10000,
         maximumAge: 0
       }
     )
@@ -1001,7 +979,13 @@ export default Content;
 <document index="21">
 <source>src\App\Home.tsx</source>
 <document_content>
-import React, { useState, useEffect } from 'react';
+/* 
+Full Path: /src/App/Home.tsx
+Last Modified: 2025-02-28 17:00:00
+*/
+
+import React, { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import Map from './Map';
 import Shop from './Shop';
 import SearchFeature from './SearchFeature';
@@ -1025,19 +1009,19 @@ const Home: React.FC<HomeProps> = (props) => {
   }, [props.data]);
 
   // 検索結果を受け取るハンドラ
-  const handleSearchResults = (results: Pwamap.ShopData[]) => {
+  const handleSearchResults = useCallback((results: Pwamap.ShopData[]) => {
     setFilteredShops(results);
-  };
+  }, []);
 
   // 店舗選択ハンドラ
-  const handleSelectShop = (shop: Pwamap.ShopData) => {
+  const handleSelectShop = useCallback((shop: Pwamap.ShopData) => {
     setSelectedShop(shop);
-  };
+  }, []);
 
   // Shop閉じる処理
-  const handleCloseShop = () => {
+  const handleCloseShop = useCallback(() => {
     setSelectedShop(undefined);
-  };
+  }, []);
 
   return (
     <div className="home">
@@ -1052,17 +1036,18 @@ const Home: React.FC<HomeProps> = (props) => {
         onSelectShop={handleSelectShop}
         initialData={props.data}
       />
-      {selectedShop && (
-        <Shop 
-          shop={selectedShop} 
-          close={handleCloseShop} 
-        />
-      )}
+      {selectedShop &&
+        ReactDOM.createPortal(
+          <Shop shop={selectedShop} close={handleCloseShop} />,
+          document.getElementById('modal-root') as HTMLElement
+        )
+      }
     </div>
   );
 };
 
 export default Home;
+
 </document_content>
 </document>
 <document index="22">
@@ -1184,14 +1169,15 @@ export default Content;
 <document index="24">
 <source>src\App\List.tsx</source>
 <document_content>
-import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import ShopListItem from './ShopListItem'
-import Shop from './Shop'
-import './List.scss'
-import { useSearchParams } from "react-router-dom";
+import React, { useState, useEffect, useMemo } from "react";
+import ShopListItem from './ShopListItem';
+import Shop from './Shop';
+import './List.scss';
+import { useSearchParams, useNavigate } from "react-router-dom";
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { askGeolocationPermission } from '../geolocation'
-import * as turf from "@turf/turf"
+import { askGeolocationPermission } from '../geolocation';
+import * as turf from "@turf/turf";
+import { useSwipeable } from "react-swipeable";
 
 // スケルトンローディングコンポーネント
 const SkeletonItem = React.memo(() => (
@@ -1206,158 +1192,131 @@ const SkeletonItem = React.memo(() => (
 
 type Props = {
   data: Pwamap.ShopData[];
-}
+};
 
-// 距離計算を行う非同期関数
-const calculateDistances = async (shopList: Pwamap.ShopData[], signal: AbortSignal) => {
-  try {
-    if (signal.aborted) return shopList;
-    
-    const currentPosition = await askGeolocationPermission();
-    if (!currentPosition || signal.aborted) return shopList;
-    
+type ShopDataWithDistance = Pwamap.ShopData & { distance?: number };
+
+const sortShopList = async (shopList: Pwamap.ShopData[]): Promise<ShopDataWithDistance[]> => {
+  const currentPosition = await askGeolocationPermission();
+  if (currentPosition) {
     const from = turf.point(currentPosition);
-    return shopList.map((shop) => {
-      const lng = parseFloat(shop['経度'])
-      const lat = parseFloat(shop['緯度'])
-      if(Number.isNaN(lng) || Number.isNaN(lat)) {
-        return shop
+    const sortingShopList = shopList.map((shop) => {
+      const lng = parseFloat(shop['経度']);
+      const lat = parseFloat(shop['緯度']);
+      if (Number.isNaN(lng) || Number.isNaN(lat)) {
+        return shop;
       } else {
-        const to = turf.point([lng, lat])
-        const distance = turf.distance(from, to, {units: 'meters' as 'meters'});
-        return { ...shop, distance }
-      }
-    }).sort((a,b) => {
-      if(typeof a.distance !== 'number' || Number.isNaN(a.distance)) {
-        return 1
-      } else if (typeof b.distance !== 'number' || Number.isNaN(b.distance)) {
-        return -1
-      } else {
-        return a.distance - b.distance
+        const to = turf.point([lng, lat]);
+        const distance = turf.distance(from, to, {units: 'meters'});
+        return { ...shop, distance };
       }
     });
-  } catch (error) {
-    console.warn('位置情報取得エラー:', error);
+    sortingShopList.sort((a, b) => {
+      if (typeof a.distance !== 'number' || Number.isNaN(a.distance)) {
+        return 1;
+      } else if (typeof b.distance !== 'number' || Number.isNaN(b.distance)) {
+        return -1;
+      } else {
+        return (a.distance as number) - (b.distance as number);
+      }
+    });
+    return sortingShopList;
+  } else {
     return shopList;
   }
-}
+};
 
 const Content = (props: Props) => {
-  const [shop, setShop] = useState<Pwamap.ShopData | undefined>(undefined);
-  const [filteredData, setFilteredData] = useState<Pwamap.ShopData[]>([]);
-  const [list, setList] = useState<Pwamap.ShopData[]>([]);
-  const [page, setPage] = useState(20); // 初期表示を20件に増加
-  const [hasMore, setHasMore] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isDistanceCalculated, setIsDistanceCalculated] = useState(false);
 
-  // マウント状態を追跡
-  const isMountedRef = useRef(true);
-  const abortControllerRef = useRef<AbortController | null>(null);
+  const [shop, setShop] = useState<Pwamap.ShopData | undefined>();
+  const [data, setData] = useState<Pwamap.ShopData[]>(props.data);
+  const [list, setList] = useState<Pwamap.ShopData[]>([]);
+  const [page, setPage] = useState(10);
+  const [hasMore, setHasMore] = useState(true);
+  const navigate = useNavigate();
 
   const [searchParams] = useSearchParams();
   const queryCategory = searchParams.get('category');
 
-  // コンポーネントのアンマウント時にクリーンアップ
   useEffect(() => {
-    return () => {
-      isMountedRef.current = false;
-      
-      // 実行中の非同期処理をキャンセル
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, []);
+    let isMounted = true;
 
-  // カテゴリでデータをフィルタリング（メモ化）
-  const filteredByCategory = useMemo(() => {
-    if (!queryCategory) return props.data;
-    return props.data.filter((shop) => shop['カテゴリ'] === queryCategory);
-  }, [props.data, queryCategory]);
+    const fetchData = async () => {
+      let filteredData = props.data;
 
-  // 初期データ設定
-  useEffect(() => {
-    // 初期表示のためのデータをすぐに設定
-    setFilteredData(filteredByCategory);
-    setList(filteredByCategory.slice(0, page));
-    setHasMore(filteredByCategory.length > page);
-    
-    // 位置情報取得と距離計算を非同期で開始（UIをブロックしない）
-    const orderBy = process.env.REACT_APP_ORDERBY;
-    if (orderBy === 'distance' && !isDistanceCalculated) {
-      setIsLoading(true);
-      
-      // 前回の非同期処理があればキャンセル
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-      
-      // 新しい AbortController を作成
-      abortControllerRef.current = new AbortController();
-      const { signal } = abortControllerRef.current;
-      
-      calculateDistances(filteredByCategory, signal)
-        .then(sortedData => {
-          if (isMountedRef.current && !signal.aborted) {
-            setFilteredData(sortedData);
-            setList(sortedData.slice(0, page));
-            setIsDistanceCalculated(true);
-            setIsLoading(false);
-          }
-        })
-        .catch(error => {
-          if (error.name !== 'AbortError' && isMountedRef.current) {
-            console.warn('距離計算エラー:', error);
-            setIsLoading(false);
-          }
+      if (queryCategory) {
+        filteredData = props.data.filter((shop) => {
+          return shop['カテゴリ'] === queryCategory;
         });
-    }
-    
-    // クリーンアップ関数
-    return () => {
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
+      }
+
+      const orderBy = process.env.REACT_APP_ORDERBY;
+
+      if (orderBy === 'distance') {
+        const sortedData = await sortShopList(filteredData);
+        if (isMounted) {
+          setList(sortedData.slice(0, page));
+          setData(sortedData);
+        }
+      } else {
+        if (isMounted) {
+          setList(filteredData.slice(0, page));
+          setData(filteredData);
+        }
       }
     };
-  }, [filteredByCategory, page, isDistanceCalculated]);
 
-  // ポップアップ表示ハンドラ
-  const popupHandler = useCallback((shop: Pwamap.ShopData) => {
-    if (isMountedRef.current) {
+    fetchData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [props.data, queryCategory, page]);
+
+  const popupHandler = (shop: Pwamap.ShopData) => {
+    if (shop) {
       setShop(shop);
     }
-  }, []);
+  };
 
-  // ポップアップ閉じるハンドラ
-  const closeHandler = useCallback(() => {
-    if (isMountedRef.current) {
-      setShop(undefined);
-    }
-  }, []);
+  const closeHandler = () => {
+    setShop(undefined);
+  };
 
-  // 追加データ読み込みハンドラ（メモ化して最適化）
-  const loadMore = useCallback(() => {
-    if (!isMountedRef.current || list.length >= filteredData.length) {
+  const loadMore = () => {
+
+    if (list.length >= data.length) {
       setHasMore(false);
       return;
     }
-    
-    const nextItems = filteredData.slice(list.length, list.length + 20);
-    setList(prev => [...prev, ...nextItems]);
-  }, [list.length, filteredData]);
 
-  // スケルトンローダー（リスト項目がロード中の場合に表示）
-  const skeletonLoader = (
+    setList([...list, ...data.slice(page, page + 10)]);
+    setPage(page + 10);
+  };
+
+  // スワイプハンドラーの設定
+  const swipeHandlers = useSwipeable({
+    onSwiped: (eventData) => {
+      // X方向のスワイプのみを検出し、前の画面に戻る
+      if (Math.abs(eventData.deltaX) > Math.abs(eventData.deltaY) && Math.abs(eventData.deltaX) > 50) {
+        navigate(-1);
+      }
+    },
+    trackMouse: false,
+    preventScrollOnSwipe: false,
+  });
+
+  // skeletonLoader を定義して、InfiniteScroll の loader として利用する
+  const skeletonLoader = useMemo(() => (
     <div className="skeleton-container">
       {Array(3).fill(0).map((_, index) => (
         <SkeletonItem key={`skeleton-${index}`} />
       ))}
     </div>
-  );
+  ), []);
 
   return (
-    <div id="shop-list" className="shop-list">
+    <div id="shop-list" className="shop-list" {...swipeHandlers}>
       {queryCategory && <div className="shop-list-category">{`カテゴリ：「${queryCategory}」`}</div>}
 
       <InfiniteScroll
@@ -1366,11 +1325,10 @@ const Content = (props: Props) => {
         hasMore={hasMore}
         loader={<div className="list-loader" key="loader"></div>}
         scrollableTarget="shop-list"
-        endMessage={<div className="list-end-message">すべての場所を表示しました</div>}
       >
-        {list.length === 0 && isLoading ? skeletonLoader : 
-          list.map((item, index) => (
-            <div key={`shop-${index}-${item.index}`} className="shop">
+        {list.length === 0 ? skeletonLoader : 
+          list.map((item) => (
+            <div key={item.index} className="shop">
               <ShopListItem
                 data={item}
                 popupHandler={popupHandler}
@@ -1392,12 +1350,13 @@ export default React.memo(Content);
 <document index="25">
 <source>src\App\Map.tsx</source>
 <document_content>
-import React, { useRef, useState, useEffect } from "react";
+// /src/App/Map.tsx
+import React from "react";
 // @ts-ignore
 import geojsonExtent from '@mapbox/geojson-extent';
 import toGeoJson from './toGeoJson';
 import setCluster from './setCluster';
-import Qrcode from './Qrcode'; // Corrected import path
+import SearchFeature from './SearchFeature';
 
 type Props = {
   data: Pwamap.ShopData[];
@@ -1406,6 +1365,10 @@ type Props = {
   initialData?: Pwamap.ShopData[];
 };
 
+// 新潟県中心の座標（初期表示用フォールバック）
+const NIIGATA_CENTER: [number, number] = [138.5, 37.9];
+const DEFAULT_ZOOM = 8;
+
 const CSS: React.CSSProperties = {
   width: '100%',
   height: '100%',
@@ -1413,157 +1376,307 @@ const CSS: React.CSSProperties = {
 };
 
 const hidePoiLayers = (map: any) => {
-  // ... (unchanged) ...
+  const hideLayers = [
+    'poi',
+    'poi-primary',
+    'poi-r0-r9',
+    'poi-r10-r24',
+    'poi-r25',
+    'poi-bus',
+    'poi-entrance',
+  ];
+
+  for (let i = 0; i < hideLayers.length; i++) {
+    const layerId = hideLayers[i];
+    map.setLayoutProperty(layerId, 'visibility', 'none');
+  }
 };
 
 const Content = (props: Props) => {
-  const { data, selectedShop, onSelectShop } = props; // Destructure props
-  const mapNode = useRef<HTMLDivElement>(null);
-  const [mapObject, setMapObject] = useState<any>(null);
-  const isMounted = useRef(true);
+  const mapNode = React.useRef<HTMLDivElement>(null);
+  const [mapObject, setMapObject] = React.useState<any>();
+  const [filteredData, setFilteredData] = React.useState<Pwamap.ShopData[]>([]);
+  
+  // 検索結果を受け取るハンドラー
+  const handleSearchResults = (results: Pwamap.ShopData[]) => {
+    setFilteredData(results);
+  };
 
-  useEffect(() => {
-    isMounted.current = true;
-    if (mapObject || !mapNode.current) return;
+  // マーカーをマップに追加
+  const addMarkers = (mapObject: any, data: any) => {
+    if (!mapObject || data.length === 0) {
+      return;
+    }
 
-    let map: any = null;
-    try {
-      if (!window.geolonia) {
-        console.error('Geolonia is not loaded');
+    mapObject.on('render', () => {
+      // 既にソースが存在する場合は何もしない
+      if (mapObject.getSource('shops')) {
         return;
       }
-      map = new window.geolonia.Map({
-        container: mapNode.current,
-        style: 'geolonia/gsi',
-        attributionControl: false,
+
+      hidePoiLayers(mapObject);
+
+      const textColor = '#000000';
+      const textHaloColor = '#FFFFFF';
+
+      const geojson = toGeoJson(data);
+
+      mapObject.addSource('shops', {
+        type: 'geojson',
+        data: geojson,
+        cluster: true,
+        clusterMaxZoom: 14,
+        clusterRadius: 25,
       });
-      if (isMounted.current) setMapObject(map);
-    } catch (error) {
-      console.error('Error initializing map:', error);
-    }
-    return () => {
-      isMounted.current = false;
-      if (map) map.remove();
-    };
-  }, []); // Empty dependency array: runs only once on mount
 
+      mapObject.addLayer({
+        id: 'shop-points',
+        type: 'circle',
+        source: 'shops',
+        filter: ['all', ['==', '$type', 'Point']],
+        paint: {
+          'circle-radius': 13,
+          'circle-color': '#FF0000',
+          'circle-opacity': 0.4,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-opacity': 1,
+        },
+      });
 
-  useEffect(() => {
-    if (!mapObject || !isMounted.current) return;
+      mapObject.addLayer({
+        id: 'shop-symbol',
+        type: 'symbol',
+        source: 'shops',
+        filter: ['all', ['==', '$type', 'Point']],
+        paint: {
+          'text-color': textColor,
+          'text-halo-color': textHaloColor,
+          'text-halo-width': 2,
+        },
+        layout: {
+          'text-field': "{スポット名}",
+          'text-font': ['Noto Sans Regular'],
+          'text-variable-anchor': ['top', 'bottom', 'left', 'right'],
+          'text-radial-offset': 0.5,
+          'text-justify': 'auto',
+          'text-size': 12,
+          'text-anchor': 'top',
+          'text-max-width': 12,
+          'text-allow-overlap': false,
+        },
+      });
 
-    const handleShopClick = (event: any) => {
-      if (!event.features[0].properties.cluster && isMounted.current) {
-        onSelectShop(event.features[0].properties);
-        // Show popup with QR code
-        new window.geolonia.Popup()
-          .setLngLat(event.lngLat)
-          .setHTML(`
-            <h3>${event.features[0].properties['スポット名']}</h3>
-            <Qrcode url={"https://example.com/shop/" + event.features[0].properties['id']} />
-          `)
-          .addTo(mapObject);
+      mapObject.on('mouseenter', 'shop-points', () => {
+        mapObject.getCanvas().style.cursor = 'pointer';
+      });
 
-      }
-    };
+      mapObject.on('mouseleave', 'shop-points', () => {
+        mapObject.getCanvas().style.cursor = '';
+      });
 
-    const setupMapData = () => {
-      try {
-        hidePoiLayers(mapObject);
-        if (data && data.length > 0) {
-          const geojson = toGeoJson(data);
-          if (mapObject.getSource('shops')) {
-            mapObject.getSource('shops').setData(geojson);
-          } else {
-            mapObject.addSource('shops', {
-              type: 'geojson',
-              data: geojson,
-              cluster: true,
-              clusterMaxZoom: 14,
-              clusterRadius: 25,
-            });
+      mapObject.on('mouseenter', 'shop-symbol', () => {
+        mapObject.getCanvas().style.cursor = 'pointer';
+      });
 
-            mapObject.addLayer({
-              id: 'shop-points',
-              type: 'circle',
-              source: 'shops',
-              // ... (rest of the layer definition) ...
-            });
+      mapObject.on('mouseleave', 'shop-symbol', () => {
+        mapObject.getCanvas().style.cursor = '';
+      });
 
-            mapObject.addLayer({
-              id: 'shop-symbol',
-              type: 'symbol',
-              source: 'shops',
-              // ... (rest of the layer definition) ...
-            });
-            mapObject.on('click', 'shop-points', handleShopClick);
-            mapObject.on('click', 'shop-symbol', handleShopClick);
-            setCluster(mapObject);
-          }
-          if (!selectedShop) {
-            const bounds = geojsonExtent(geojson);
-            if (bounds) mapObject.fitBounds(bounds, { padding: 50 });
-          }
+      mapObject.on('click', 'shop-points', (event: any) => {
+        if (!event.features[0].properties.cluster) {
+          props.onSelectShop(event.features[0].properties);
         }
-      } catch (error) {
-        console.error('Error setting up map data:', error);
-      }
+      });
+
+      mapObject.on('click', 'shop-symbol', (event: any) => {
+        if (!event.features[0].properties.cluster) {
+          props.onSelectShop(event.features[0].properties);
+        }
+      });
+
+      setCluster(mapObject);
+    });
+  };
+
+  // マップデータが変わったらマーカーを更新
+  React.useEffect(() => {
+    // データをどちらにするか決める
+    const displayData = filteredData.length > 0 ? filteredData : props.data;
+    
+    addMarkers(mapObject, displayData);
+  }, [mapObject, filteredData, props.data]);
+
+  // 地図の表示範囲を調整
+  React.useEffect(() => {
+    if (!mapObject || props.data.length === 0) {
+      return;
+    }
+    
+    // 表示するデータ
+    const displayData = filteredData.length > 0 ? filteredData : props.data;
+    
+    const geojson = toGeoJson(displayData);
+    const bounds = geojsonExtent(geojson);
+
+    if (bounds) {
+      mapObject.fitBounds(bounds, {
+        padding: 50
+      });
+    }
+  }, [mapObject, filteredData, props.data]);
+
+  // 選択された店舗があれば、その位置に地図を移動
+  React.useEffect(() => {
+    if (!mapObject || !props.selectedShop) {
+      return;
+    }
+    
+    const lat = parseFloat(props.selectedShop['緯度']);
+    const lng = parseFloat(props.selectedShop['経度']);
+    
+    if (lat && lng) {
+      mapObject.flyTo({
+        center: [lng, lat],
+        zoom: 17,
+        essential: true
+      });
+    }
+  }, [mapObject, props.selectedShop]);
+
+  // 地図の初期化（一度だけ実行）
+  React.useEffect(() => {
+    // マップノードが無いか、既にマップオブジェクトが存在する場合は何もしない
+    if (!mapNode.current || mapObject) {
+      return;
+    }
+
+    // @ts-ignore
+    const { geolonia } = window;
+
+    // 地図を初期化
+    const map = new geolonia.Map({
+      container: mapNode.current,
+      style: 'geolonia/basic',
+      center: NIIGATA_CENTER,
+      zoom: DEFAULT_ZOOM
+    });
+
+    // 地図が読み込まれたときの処理
+    const onMapLoad = () => {
+      hidePoiLayers(map);
+      setMapObject(map);
+      
+      // ジオロケーションコントロールを追加
+      const geolocateControl = new geolonia.GeolocateControl({
+        positionOptions: {
+          enableHighAccuracy: true,
+          timeout: 5000,
+          maximumAge: 0
+        },
+        trackUserLocation: true,
+        showUserLocation: true
+      });
+      
+      map.addControl(geolocateControl, 'top-right');
+      
+      // 少し遅延して位置情報取得
+      setTimeout(() => {
+        geolocateControl.trigger();
+      }, 500);
     };
 
-    if (mapObject.loaded()) {
-      setupMapData();
-    } else {
-      mapObject.once('load', setupMapData);
-    }
+    // 画面の向きが変わったときのハンドラー
+    const orientationChangeHandler = () => {
+      map.resize();
+    };
+
+    // イベントリスナーを登録
+    map.on('load', onMapLoad);
+    window.addEventListener('orientationchange', orientationChangeHandler);
+
+    // クリーンアップ関数
     return () => {
-      if (mapObject) {
-        mapObject.off('click', 'shop-points', handleShopClick);
-        mapObject.off('click', 'shop-symbol', handleShopClick);
-        mapObject.off('load', setupMapData);
-      }
+      // イベントリスナーを削除
+      window.removeEventListener('orientationchange', orientationChangeHandler);
+      map.off('load', onMapLoad);
     };
-  }, [mapObject, data, selectedShop, onSelectShop]); // Correct dependencies
-
-
-  useEffect(() => {
-    if (!mapObject || !selectedShop || !isMounted.current) return;
-    try {
-      const lat = parseFloat(selectedShop['緯度']);
-      const lng = parseFloat(selectedShop['経度']);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        mapObject.flyTo({
-          center: [lng, lat],
-          zoom: 17,
-          duration: 500,
-        });
-      }
-    } catch (error) {
-      console.warn('Error centering map on selected shop:', error);
-    }
-  }, [mapObject, selectedShop]); // Correct dependencies
-
+  }, [mapNode, mapObject, props.data]);
 
   return (
     <div style={CSS}>
+      {/* 検索機能 */}
+      <div style={{ position: 'absolute', top: 10, left: 10, right: 10, zIndex: 1 }}>
+        <SearchFeature 
+          data={props.data} 
+          onSearchResults={handleSearchResults} 
+          onSelectShop={props.onSelectShop} 
+        />
+      </div>
+      
+      {/* 地図コンテナ */}
       <div
         ref={mapNode}
-        style={{ ...CSS, marginTop: '90px' }}
-        data-geolocate-control="on"
+        style={CSS}
+        data-geolocate-control="off"
         data-marker="off"
-        data-gesture-handling="off"
-      />
+        data-gesture-handling="on"
+      ></div>
     </div>
   );
 };
 
 export default Content;
-
-
 </document_content>
 </document>
 <document index="26">
+<source>src\App\SearchBar.tsx</source>
+<document_content>
+import React, { useState, useCallback } from 'react';
+import './SearchBar.scss';
+
+type SearchBarProps = {
+  onSearch: (query: string) => void;
+};
+
+const SearchBar: React.FC<SearchBarProps> = ({ onSearch }) => {
+  const [query, setQuery] = useState('');
+  
+  // デバウンスされた検索処理
+  const debouncedSearch = useCallback((value: string) => {
+    const timeoutId = setTimeout(() => {
+      onSearch(value);
+    }, 300);
+    return () => clearTimeout(timeoutId);
+  }, [onSearch]);
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setQuery(value);
+    debouncedSearch(value);
+  };
+  
+  return (
+    <div className="search-bar-container">
+      <input
+        type="text"
+        className="search-input"
+        placeholder="スポットを検索..."
+        value={query}
+        onChange={handleChange}
+        aria-label="検索"
+      />
+    </div>
+  );
+};
+
+export default SearchBar;
+</document_content>
+</document>
+<document index="27">
 <source>src\App\SearchFeature.tsx</source>
 <document_content>
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './SearchFeature.scss';
 
 type SearchFeatureProps = {
@@ -1580,6 +1693,22 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
   const [categories, setCategories] = useState<string[]>([]);
   const [results, setResults] = useState<Pwamap.ShopData[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // クリック外のイベントを監視して、ドロップダウンを閉じる
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // カテゴリ一覧を作成
   useEffect(() => {
@@ -1592,6 +1721,7 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
   // フィルタリング処理
   const filterShops = useCallback(() => {
     let filtered = data;
+    console.debug(`フィルタリング開始：全店舗数 ${filtered.length}`);
 
     // テキスト検索
     if (query.trim() !== '') {
@@ -1603,28 +1733,41 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
           return false;
         });
       });
+      console.debug(`テキスト検索後： ${filtered.length} 件`);
     }
 
     // カテゴリでフィルタリング
     if (selectedCategory) {
       filtered = filtered.filter(shop => shop['カテゴリ'] === selectedCategory);
+      console.debug(`カテゴリフィルタ後： ${filtered.length} 件`);
     }
 
     // 営業中でフィルタリング
     if (isOpenNow) {
+      // 現在時刻をJST（UTC+9）に補正して取得
       const now = new Date();
-      const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][now.getDay()];
-      const currentHour = now.getHours();
-      const currentMinute = now.getMinutes();
+      const utc = now.getTime() + now.getTimezoneOffset() * 60000;
+      const jstNow = new Date(utc + 9 * 60 * 60000);
+      const currentHour = jstNow.getHours();
+      const currentMinute = jstNow.getMinutes();
       const currentTimeMinutes = currentHour * 60 + currentMinute;
+      console.debug(`現在のJST時刻: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
+      const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][jstNow.getDay()];
 
       filtered = filtered.filter(shop => {
-        // 定休日チェック
-        if (shop['定休日'] && shop['定休日'].includes(dayOfWeek)) {
-          return false;
+        // 定休日チェック：カンマ、全角カンマ、空白で分割してチェック
+        if (shop['定休日']) {
+          const closedDays = shop['定休日']
+            .split(/,|、|\s+/)
+            .map(day => day.trim())
+            .filter(day => day !== '');
+          if (closedDays.some(day => day.includes(dayOfWeek))) {
+            console.debug(`店舗[${shop['スポット名']}]：定休日(${dayOfWeek})のため除外`);
+            return false;
+          }
         }
 
-        // 営業時間チェック
+        // 営業時間チェック（例: "10:00 - 17:00" の形式）
         if (shop['営業時間']) {
           const timeRangeMatch = shop['営業時間'].match(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/);
           if (timeRangeMatch) {
@@ -1633,36 +1776,53 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
             const startMinute = parseInt(startMinuteStr, 10);
             const endHour = parseInt(endHourStr, 10);
             const endMinute = parseInt(endMinuteStr, 10);
-
             const startTimeMinutes = startHour * 60 + startMinute;
             const endTimeMinutes = endHour * 60 + endMinute;
+            
+            console.debug(`店舗[${shop['スポット名']}] 営業時間: ${startHour}:${startMinute.toString().padStart(2, '0')} ～ ${endHour}:${endMinute.toString().padStart(2, '0')}、現在: ${currentHour}:${currentMinute.toString().padStart(2, '0')}`);
 
-            return currentTimeMinutes >= startTimeMinutes && currentTimeMinutes <= endTimeMinutes;
+            // 深夜営業対応（例: 22:00 - 02:00）
+            if (endTimeMinutes < startTimeMinutes) {
+              // 終了時間が開始時間より前の場合（深夜営業）
+              const isOpen = currentTimeMinutes >= startTimeMinutes || currentTimeMinutes <= endTimeMinutes;
+              console.debug(`店舗[${shop['スポット名']}]: 深夜営業判定 = ${isOpen ? '営業中' : '営業時間外'}`);
+              return isOpen;
+            } else {
+              // 通常の営業時間
+              const isOpen = currentTimeMinutes >= startTimeMinutes && currentTimeMinutes <= endTimeMinutes;
+              console.debug(`店舗[${shop['スポット名']}]: 通常営業判定 = ${isOpen ? '営業中' : '営業時間外'}`);
+              return isOpen;
+            }
+          } else {
+            console.warn(`店舗[${shop['スポット名']}]：営業時間の形式が不明 (${shop['営業時間']})`);
+            // フォーマット不明な場合は営業中でないと判断
+            return false;
           }
         }
-
-        // 営業時間の形式が不明確な場合はデフォルトで表示
-        return true;
+        
+        // 営業時間情報がない場合は営業中でないと判断
+        console.debug(`店舗[${shop['スポット名']}]：営業時間情報なし`);
+        return false;
       });
+      console.debug(`営業時間フィルタ後： ${filtered.length} 件`);
     }
 
-    // 駐車場でフィルタリング
+    // 駐車場フィルタリング：1台以上あるもの
     if (hasParking) {
       filtered = filtered.filter(shop => {
         if (!shop['駐車場']) return false;
-        
-        // 数字が含まれている場合
-        const parkingCountMatch = shop['駐車場'].match(/(\d+)/);
+        const parkingStr = shop['駐車場'].trim();
+        const parkingCountMatch = parkingStr.match(/(\d+)/);
         if (parkingCountMatch) {
           const parkingCount = parseInt(parkingCountMatch[1], 10);
-          return parkingCount > 0;
+          return parkingCount >= 1;
         }
-        
-        // "有り"などのテキストの場合
-        return shop['駐車場'].includes('有') || shop['駐車場'].includes('あり');
+        return parkingStr.includes('有') || parkingStr.includes('あり');
       });
+      console.debug(`駐車場フィルタ後： ${filtered.length} 件`);
     }
 
+    console.debug(`最終フィルタ結果： ${filtered.length} 件`);
     setResults(filtered);
     onSearchResults(filtered);
   }, [data, query, selectedCategory, isOpenNow, hasParking, onSearchResults]);
@@ -1679,8 +1839,9 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
   };
 
   // カテゴリ選択ハンドラー
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCategory(e.target.value);
+  const handleCategorySelect = (category: string) => {
+    setSelectedCategory(category);
+    setShowCategoryDropdown(false);
   };
 
   // 結果アイテムクリックハンドラー
@@ -1702,19 +1863,33 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
       </div>
 
       <div className="filter-container">
-        <div className="filter-item category-filter">
-          <select
-            value={selectedCategory}
-            onChange={handleCategoryChange}
-            className={`filter-select ${selectedCategory ? 'active' : ''}`}
+        {/* カスタムドロップダウン */}
+        <div className="filter-item category-filter" ref={dropdownRef}>
+          <div 
+            className={`custom-dropdown-header ${selectedCategory ? 'active' : ''}`}
+            onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
           >
-            <option value="">カテゴリ ▼</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
+            {selectedCategory === '' ? 'すべて' : selectedCategory}
+          </div>
+          {showCategoryDropdown && (
+            <div className="custom-dropdown-list">
+              <div 
+                className="custom-dropdown-item"
+                onClick={() => handleCategorySelect('')}
+              >
+                すべて
+              </div>
+              {categories.map((category) => (
+                <div
+                  key={category}
+                  className="custom-dropdown-item"
+                  onClick={() => handleCategorySelect(category)}
+                >
+                  {category}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         
         <div className="filter-item">
@@ -1722,7 +1897,7 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
             className={`filter-button ${isOpenNow ? 'active' : ''}`}
             onClick={() => setIsOpenNow(!isOpenNow)}
           >
-            現在営業中 ▼
+            現在営業中
           </button>
         </div>
         
@@ -1742,21 +1917,39 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
             <div className="no-results">該当する店舗がありません</div>
           ) : (
             <div className="results-list">
-              {results.slice(0, 10).map((shop, index) => (
+              {results.map((shop, index) => (
                 <div
                   key={`shop-result-${index}`}
                   className="result-item"
                   onClick={() => handleResultClick(shop)}
                 >
-                  <div className="result-name">{shop['スポット名']}</div>
-                  <div className="result-category">{shop['カテゴリ']}</div>
+                  <div className="result-info">
+                    <div className="result-name" style={{ fontSize: '14px', fontWeight: 'bold', color: '#333' }}>
+                      {shop['スポット名']}
+                    </div>
+                    <div className="result-hours" style={{ fontSize: '8pt', fontWeight: '600' }}>
+                     営業時間： {shop['営業時間'] ? shop['営業時間'] : '営業時間不明'}
+                    </div>
+                    <div className="result-closed" style={{ fontSize: '8pt', fontWeight: '600' }}>
+                      定休日：{shop['定休日'] ? shop['定休日'] : '定休日不明'}
+                    </div>
+                    <div className="result-address" style={{ fontSize: '8pt', fontWeight: '600' }}>
+                     住所： {shop['住所'] ? shop['住所'] : '住所不明'}
+                    </div>
+                  </div>
+                  <div className="result-image">
+                    {shop['画像'] ? (
+                      <img
+                        src={shop['画像'].startsWith('http') ? shop['画像'] : `/${shop['画像']}`}
+                        alt={shop['スポット名']}
+                        style={{ width: 'auto', height: '100%', margin: 0, display: 'block' }}
+                      />
+                    ) : (
+                      <div style={{ width: 'auto', height: '100%', background: '#ccc' }}></div>
+                    )}
+                  </div>
                 </div>
               ))}
-              {results.length > 10 && (
-                <div className="more-results">
-                  他 {results.length - 10} 件の結果があります
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -1768,7 +1961,46 @@ const SearchFeature: React.FC<SearchFeatureProps> = ({ data, onSearchResults, on
 export default SearchFeature;
 </document_content>
 </document>
-<document index="27">
+<document index="28">
+<source>src\App\SearchResultItem.tsx</source>
+<document_content>
+import React from 'react';
+import './SearchResultItem.scss';
+
+type SearchResultItemProps = {
+  shop: any; // TypeScriptの警告を回避するためにany型を使用
+  onClick: () => void;
+};
+
+const SearchResultItem: React.FC<SearchResultItemProps> = ({ shop, onClick }) => {
+  // 画像URLの取得
+  const image = shop['画像'] || '';
+  
+  return (
+    <div className="search-result-item" onClick={onClick}>
+      <div className="item-content">
+        <div className="item-name">{shop['スポット名'] || '名称なし'}</div>
+        <div className="item-detail">営業時間: {shop['営業時間'] || '情報なし'}</div>
+        <div className="item-detail">定休日: {shop['定休日'] || '情報なし'}</div>
+        <div className="item-detail">{shop['住所'] || '住所情報なし'}</div>
+      </div>
+      {image && (
+        <div className="item-image-container">
+          <img 
+            src={image} 
+            alt={shop['スポット名'] || '画像'} 
+            className="item-image" 
+          />
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default SearchResultItem;
+</document_content>
+</document>
+<document index="29">
 <source>src\App\SearchResultsPanel.tsx</source>
 <document_content>
 import React, { useEffect, useRef } from 'react';
@@ -1831,7 +2063,7 @@ const SearchResultsPanel: React.FC<SearchResultsPanelProps> = ({
 export default SearchResultsPanel;
 </document_content>
 </document>
-<document index="28">
+<document index="30">
 <source>src\App\setCluster.ts</source>
 <document_content>
 const setCluster = (map: any) => {
@@ -1889,7 +2121,7 @@ export default setCluster;
 
 </document_content>
 </document>
-<document index="29">
+<document index="31">
 <source>src\App\Share.tsx</source>
 <document_content>
 import React from "react";
@@ -1917,173 +2149,201 @@ export default Content;
 
 </document_content>
 </document>
-<document index="30">
+<document index="32">
 <source>src\App\Shop.tsx</source>
 <document_content>
-import React from "react";
-import Links from './Links'
-import './Shop.scss'
-import { AiOutlineClose } from 'react-icons/ai'
+import React, { useEffect, useRef, useState, useContext } from "react";
+import Links from "./Links";
+import "./Shop.scss";
+import { AiOutlineClose } from "react-icons/ai";
 import { Link } from "react-router-dom";
 import { makeDistanceLabelText } from "./distance-label";
+import { GeolocationContext } from "../context/GeolocationContext";
+import * as turf from "@turf/turf";
 
 type Props = {
   shop: Pwamap.ShopData;
-  close: Function;
-}
+  close: () => void;
+};
 
-const Content = (props: Props) => {
-  const mapNode = React.useRef<HTMLDivElement>(null);
-  const [map, setMap] = React.useState<any>(null)
-  const { shop } = props
+const SWIPE_THRESHOLD = 80;
 
-  const clickHandler = () => {
-    props.close()
-    if(mapNode.current) {
-      mapNode.current.remove()
-      map.remove()
+const Shop: React.FC<Props> = (props) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [localDistance, setLocalDistance] = useState<number | undefined>(props.shop.distance);
+  const currentPosition = useContext(GeolocationContext);
+
+  // アニメーション用: マウント時に .slide-in クラスを付与して右側からスライドイン
+  useEffect(() => {
+    if (containerRef.current) {
+      setTimeout(() => {
+        containerRef.current?.classList.add("slide-in");
+      }, 10);
     }
-  }
+  }, []);
 
-  React.useEffect(() => {
-    if (!mapNode.current) {
-      return
-    }
-
-    // @ts-ignore
-    const nextMap = new window.geolonia.Map({
-      container: mapNode.current,
-      interactive: false,
-      zoom: 14,
-      style: `geolonia/gsi`,
-    });
-    setMap(nextMap)
-  }, [shop, mapNode])
-
-  const distanceTipText = makeDistanceLabelText(shop.distance)
-  const category = shop['カテゴリ']
-  const content = shop['紹介文']
-
-  const toBreakLine = (text: string) => {
-    return text.split(/(\r\n)|(\n)|(\r)/g).map((line, i) => {
-      let result: any = '';
-      if (line === '\r\n' || line === '\n' || line === '\r') {
-        result = <br key={i} />
-      } else if (line !== undefined) {
-        result = line
+  // もしprops.shop.distanceが未定義なら、現在位置からの距離を計算
+  useEffect(() => {
+    if (localDistance === undefined && currentPosition) {
+      const from = turf.point(currentPosition);
+      const lng = parseFloat(props.shop["経度"]);
+      const lat = parseFloat(props.shop["緯度"]);
+      if (!Number.isNaN(lng) && !Number.isNaN(lat)) {
+        const to = turf.point([lng, lat]);
+        const distance = turf.distance(from, to, { units: 'meters' as 'meters' });
+        setLocalDistance(distance);
+      } else {
+        setLocalDistance(Infinity);
       }
-      return result
-    })
-  }
+    }
+  }, [localDistance, currentPosition, props.shop]);
 
-  // 複数の画像を表示
-  const renderImages = () => {
-    const images = [];
-    
-    if (shop['画像']) images.push(shop['画像']);
-    if (shop['画像2']) images.push(shop['画像2']);
-    if (shop['画像3']) images.push(shop['画像3']);
-    if (shop['画像4']) images.push(shop['画像4']);
-    if (shop['画像5']) images.push(shop['画像5']);
-    
-    return images.map((img, index) => (
-      <img key={index} src={img} alt={`${shop['スポット名']} - 画像${index + 1}`} className="shop-image" />
-    ));
+  // タッチイベント用の座標管理
+  const touchStartX = useRef<number | null>(null);
+  const touchEndX = useRef<number | null>(null);
+
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = null;
+    touchStartX.current = e.touches[0].clientX;
   };
 
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    touchEndX.current = e.changedTouches[0].clientX;
+    handleSwipeGesture();
+  };
+
+  // スワイプ判定: 一定以上の横スワイプで閉じる（閉じるボタンと同じ動作）
+  const handleSwipeGesture = () => {
+    if (touchStartX.current === null || touchEndX.current === null) return;
+    const deltaX = touchStartX.current - touchEndX.current;
+    if (Math.abs(deltaX) > SWIPE_THRESHOLD) {
+      props.close();
+    }
+  };
+
+  const handleClose = () => {
+    props.close();
+  };
+
+  const distanceTipText =
+    localDistance !== undefined && localDistance !== Infinity
+      ? makeDistanceLabelText(localDistance)
+      : "距離不明";
+
+  const category = props.shop["カテゴリ"] || "";
+  const content = props.shop["紹介文"] || "";
+  const spotName = props.shop["スポット名"] || "店名不明";
+
+  const hours = props.shop["営業時間"] || "営業時間不明";
+  const closed = props.shop["定休日"] || "定休日不明";
+  const address = props.shop["住所"] || "住所不明";
+  const tel = props.shop["TEL"];
+  const site = props.shop["公式サイト"];
+
+  // 画像データの処理
+  const getImages = () => {
+    const imageKeys = ['画像', '画像2', '画像3', '画像4', '画像5'];
+    return imageKeys
+      .map(key => props.shop[key])
+      .filter(img => img && img.trim() !== '')
+      .map(img => {
+        // 既にURLの場合はそのまま使用、ファイル名のみの場合はpublicフォルダからのパスとして扱う
+        if (img.startsWith('http')) {
+          return img;
+        } else {
+          return `/${img}`; // publicフォルダからの相対パス
+        }
+      });
+  };
+
+  const images = getImages();
+
   return (
-    <div className="shop-single">
+    <div
+      className="shop-single"
+      ref={containerRef}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
       <div className="head">
-        <button onClick={clickHandler}><AiOutlineClose size="16px" color="#FFFFFF" /> 閉じる</button>
+        <button onClick={handleClose}>
+          <AiOutlineClose size="16px" color="#FFFFFF" /> 閉じる
+        </button>
       </div>
       <div className="container">
-        {shop?
-          <>
-            <h2>{shop['スポット名']}</h2>
-            <div>
-              <span className="nowrap">
-                <Link to={`/list?category=${category}`}>
-                  <span onClick={clickHandler} className="category">{category}</span>
-                </Link>
-              </span>
-              <span className="nowrap">{distanceTipText && <span className="distance">現在位置から {distanceTipText}</span> }</span>
-            </div>
+        <h2 className="shop-title">{spotName}</h2>
 
-            <div className="shop-info-box">
-              {shop['営業時間'] && (
-                <div className="info-item">
-                  <span className="info-label">営業時間:</span> {shop['営業時間']}
-                </div>
-              )}
-              {shop['駐車場'] && (
-                <div className="info-item">
-                  <span className="info-label">駐車場:</span> {shop['駐車場']}
-                </div>
-              )}
-              {shop['定休日'] && (
-                <div className="info-item">
-                  <span className="info-label">定休日:</span> {shop['定休日']}
-                </div>
-              )}
-              {shop['住所'] && (
-                <div className="info-item">
-                  <span className="info-label">住所:</span> {shop['住所']}
-                </div>
-              )}
-              {shop['創業年月'] && (
-                <div className="info-item">
-                  <span className="info-label">創業年月:</span> {shop['創業年月']}
-                </div>
-              )}
-            </div>
+        {/* カテゴリと距離を同じ行で並べる */}
+        <div className="tag-box">
+          {category && (
+            <Link to={`/list?category=${category}`}>
+              <span className="category">{category}</span>
+            </Link>
+          )}
+          {distanceTipText && (
+            <span className="distance">現在位置から {distanceTipText}</span>
+          )}
+        </div>
 
-            <div style={{margin: "24px 0"}}><Links data={shop} /></div>
+        {/* SNS リンクをカテゴリの下に配置 */}
+        <Links data={props.shop} />
 
-            <div className="shop-images">
-              {renderImages()}
-            </div>
+        <div className="shop-info-box">
+          <div className="info-item">
+            <span className="info-label">営業時間:</span> {hours}
+          </div>
+          <div className="info-item">
+            <span className="info-label">定休日:</span> {closed}
+          </div>
+          <div className="info-item">
+            <span className="info-label">住所:</span> {address}
+          </div>
+        </div>
 
-            <p style={{margin: "24px 0", wordBreak: "break-all"}}>{toBreakLine(content)}</p>
+        {images.length > 0 && (
+          <div className="shop-images-grid">
+            {images.map((imgUrl, index) => (
+              <div key={`image-${index}`} className="shop-image-item">
+                <img src={imgUrl} alt={`${spotName} 画像${index + 1}`} className="shop-image" />
+              </div>
+            ))}
+          </div>
+        )}
 
-            <div
-              ref={mapNode}
-              style={{width: '100%', height: '200px', marginTop: "24px"}}
-              data-lat={shop['緯度']}
-              data-lng={shop['経度']}
-              data-navigation-control="off"
-            ></div>
+        {content && (
+          <p style={{ margin: "24px 0", wordBreak: "break-all" }}>{content}</p>
+        )}
 
-            <p><a className="small" href={`http://maps.apple.com/?q=${shop['緯度']},${shop['経度']}`}>スポットまでの道順</a></p>
-
-            <div className="action-buttons">
-              {shop['TEL'] && (
-                <a href={`tel:${shop['TEL']}`} className="action-button phone-button">
-                  電話で予約する
-                </a>
-              )}
-              {shop['公式サイト'] && (
-                <a href={shop['公式サイト']} target="_blank" rel="noopener noreferrer" className="action-button web-button">
-                  ネットで予約する
-                </a>
-              )}
-            </div>
-          </>
-          :
-          <></>
-        }
+        <div className="action-buttons">
+          {tel && (
+            <a href={`tel:${tel}`} className="action-button phone-button">
+              電話で予約する
+            </a>
+          )}
+          {site && (
+            <a
+              href={site}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="action-button web-button"
+            >
+              ネットで予約する
+            </a>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default Content;
+export default Shop;
 </document_content>
 </document>
-<document index="31">
+<document index="33">
 <source>src\App\ShopListItem.tsx</source>
 <document_content>
-import { BsChevronCompactRight } from 'react-icons/bs'
-import './ShopListItem.scss'
+import { BsChevronCompactRight } from 'react-icons/bs';
+import './ShopListItem.scss';
 import { Link } from "react-router-dom";
 import { makeDistanceLabelText } from "./distance-label";
 
@@ -2095,67 +2355,41 @@ type Props = {
 
 const Content = (props: Props) => {
   const clickHandler = () => {
-    props.popupHandler(props.data)
-  }
+    props.popupHandler(props.data);
+  };
 
-  const distanceTipText = makeDistanceLabelText(props.data.distance)
-  const category = props.data['カテゴリ']
-  const image = props.data['画像']
+  const distanceTipText = props.data.distance !== undefined 
+    ? makeDistanceLabelText(props.data.distance)
+    : '距離不明';
+  const category = props.data['カテゴリ'];
+  const image = props.data['画像'];
 
-  const isCategoryPage = props.queryCategory ? true :false
+  const isCategoryPage = props.queryCategory ? true : false;
 
   return (
-    <>
-      <div className="shop-link">
-        <h2 className="shop-title" style={{ wordBreak: "break-all" }} onClick={clickHandler}>{props.data['スポット名']}</h2>
-        <div className='tag-box'>
-          {
-            !isCategoryPage &&
-            <span className="nowrap">
-              <Link to={`/list?category=${category}`}>
-                <span className="category">{category}</span>
-              </Link>
-            </span>
-          }
-          <span className="nowrap">{distanceTipText && <span className="distance">現在位置から {distanceTipText}</span>}</span>
-        </div>
-
-        <div style={{ margin: "10px 10px 10px 0" }}>
-
-          { image && <img src={image} alt={props.data['スポット名']} onClick={clickHandler}/>}
-
-        </div>
-
-        <div className="right" onClick={clickHandler}><BsChevronCompactRight size="40px" color="#CCCCCC" /></div>
+    <div className="shop-link">
+      <h2 className="shop-title" style={{ wordBreak: "break-all" }} onClick={clickHandler}>
+        {props.data['スポット名']}
+      </h2>
+      <div className='tag-box'>
+        {
+          !isCategoryPage &&
+          <span className="nowrap">
+            <Link to={`/list?category=${category}`}>
+              <span className="category">{category}</span>
+            </Link>
+          </span>
+        }
+        <span className="nowrap">
+          <span className="distance">現在位置から {distanceTipText}</span>
+        </span>
       </div>
-    </>
-  );
-};
-
-export default Content;
-
-</document_content>
-</document>
-<document index="32">
-<source>src\App\Tabbar.tsx</source>
-<document_content>
-import React from "react";
-import { Link } from "react-router-dom";
-import './Tabbar.scss'
-
-import { FaList, FaHome, FaSearch, FaCamera } from "react-icons/fa"
-import { AiOutlineAppstore } from "react-icons/ai"
-
-const Content = () => {
-  return (
-    <div className="tabbar">
-      <ul>
-        <li><Link to="/"><div className="icon"><FaHome /></div><div className="text">ホーム</div></Link></li>
-        <li><Link to="/list"><div className="icon"><FaList /></div><div className="text">一覧</div></Link></li>
-        <li><Link to="/category"><div className="icon"><FaSearch /></div><div className="text">カテゴリ</div></Link></li>
-        <li><Link to="/images"><div className="icon"><FaCamera /></div><div className="text">写真から探す</div></Link></li>
-        <li><Link to="/about"><div className="icon"><AiOutlineAppstore /></div><div className="text">マップについて</div></Link></li>
-      </ul>
+      <div style={{ margin: "10px 10px 10px 0" }}>
+        { image && <img src={image} alt={props.data['スポット名']} onClick={clickHandler}/> }
+      </div>
+      <div className="right" onClick={clickHandler}>
+        <BsChevronCompactRight size="40px" color="#CCCCCC" />
+      </div>
     </div>
   );
 };
@@ -2164,7 +2398,35 @@ export default Content;
 
 </document_content>
 </document>
-<document index="33">
+<document index="34">
+<source>src\App\Tabbar.tsx</source>
+<document_content>
+import React from "react";
+import { Link } from "react-router-dom";
+import './Tabbar.scss'
+
+import { FaList, FaHome, FaCamera } from "react-icons/fa"
+import { AiOutlineAppstore } from "react-icons/ai"
+
+const Content = () => {
+  return (
+    <div className="tabbar">
+      <ul>
+        <li><Link to="/"><div className="icon"><FaHome /></div><div className="text">ホーム</div></Link></li>
+        <li><Link to="/list"><div className="icon"><FaList /></div><div className="text">一覧</div></Link></li>
+        <li><Link to="/images"><div className="icon"><FaCamera /></div><div className="text">写真から探す</div></Link></li>
+        <li><Link to="/about"><div className="icon"><AiOutlineAppstore /></div><div className="text">マップについて</div></Link></li>
+      </ul>
+    </div>
+  );
+
+};
+
+export default Content;
+
+</document_content>
+</document>
+<document index="35">
 <source>src\App\toGeoJson.ts</source>
 <document_content>
 type Geometry = {
@@ -2228,7 +2490,46 @@ export default toGeoJson;
 
 </document_content>
 </document>
-<document index="34">
+<document index="36">
+<source>src\context\GeolocationContext.tsx</source>
+<document_content>
+/* 
+Full Path: /src/context/GeolocationContext.tsx
+Last Modified: 2025-02-28 17:40:00
+*/
+
+import React, { createContext, useState, useEffect, ReactNode } from 'react';
+import { askGeolocationPermission } from '../geolocation';
+
+export type LngLat = [number, number] | null;
+
+export const GeolocationContext = createContext<LngLat>(null);
+
+export const GeolocationProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+  const [location, setLocation] = useState<LngLat>(null);
+
+  useEffect(() => {
+    askGeolocationPermission()
+      .then((pos) => {
+        if (pos) {
+          setLocation(pos);
+        }
+      })
+      .catch((error) => {
+        console.warn("Failed to get geolocation", error);
+      });
+  }, []);
+
+  return (
+    <GeolocationContext.Provider value={location}>
+      {children}
+    </GeolocationContext.Provider>
+  );
+};
+
+</document_content>
+</document>
+<document index="37">
 <source>src\lib\table2json.ts</source>
 <document_content>
 import zen2han from "./zen2han";
@@ -2253,7 +2554,7 @@ export default table2json;
 
 </document_content>
 </document>
-<document index="35">
+<document index="38">
 <source>src\lib\zen2han.ts</source>
 <document_content>
 const zen2han = (str: string) => {

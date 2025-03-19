@@ -14,6 +14,7 @@ $excludeFiles = @(
     "export-code.ps1",
     "export-code.bat",
     "Project-All-Code-Export.txt"
+    "ScriptExportの仕方.txt"
 )
 
 # 除外するディレクトリのリスト
@@ -25,6 +26,9 @@ $excludeDirs = @(
     "dist",
     ".vscode",
     "coverage"
+    ".github"
+    ".netlify"
+    "build"
 )
 
 # 対象とする拡張子
