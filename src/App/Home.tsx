@@ -1,6 +1,6 @@
 /* 
 Full Path: /src/App/Home.tsx
-Last Modified: 2025-02-28 17:00:00
+Last Modified: 2025-03-19 17:30:00
 */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -19,11 +19,14 @@ const Home: React.FC<HomeProps> = (props) => {
   const [selectedShop, setSelectedShop] = useState<Pwamap.ShopData | undefined>(undefined);
   const [filteredShops, setFilteredShops] = useState<Pwamap.ShopData[]>([]);
 
-  // 親コンポーネントからのデータを設定
+  // 親コンポーネントからのデータを設定 - 非同期処理に変更
   useEffect(() => {
     if (props.data.length > 0) {
-      setData(props.data);
-      setFilteredShops(props.data);
+      // 非同期でデータを更新（UIブロックを防止）
+      setTimeout(() => {
+        setData(props.data);
+        setFilteredShops(props.data);
+      }, 0);
     }
   }, [props.data]);
 
